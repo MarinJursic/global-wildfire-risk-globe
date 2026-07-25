@@ -1,5 +1,8 @@
 # EMBER — Global Wildfire Risk & Spread Forecasting Globe
 
+[![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/global-wildfire-risk-globe/)
+[![Preview status](https://github.com/MarinJursic/global-wildfire-risk-globe/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/global-wildfire-risk-globe/actions/workflows/pages.yml)
+
 ![Illustrated EMBER social preview showing a global risk globe and uncertainty rings](public/og.png)
 
 The project-specific PNG above is the repository’s **illustrated social card**, not
