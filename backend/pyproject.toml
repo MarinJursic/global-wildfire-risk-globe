@@ -1,0 +1,28 @@
+[project]
+name = "ember-wildfire-api"
+version = "0.1.0"
+description = "Deterministic scientific demo API for wildfire ignition-risk and spread forecasts"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.116.1",
+  "pydantic==2.11.7",
+  "uvicorn[standard]==0.35.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx==0.28.1",
+  "pytest==8.4.1",
+  "ruff==0.12.5",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
