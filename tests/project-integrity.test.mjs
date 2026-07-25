@@ -21,7 +21,10 @@ test("repository includes a real, reviewable dashboard capture", async () => {
   assert.ok(screenshot.readUInt32BE(20) >= 630);
 
   const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
-  assert.match(readme, /!\[EMBER dashboard running locally\]\(public\/ember-dashboard\.png\)/);
+  assert.match(
+    readme,
+    /!\[EMBER dashboard running locally[^\]]*\]\(public\/ember-dashboard\.png\)/,
+  );
   assert.match(readme, /not a design mockup/i);
 });
 
@@ -36,4 +39,19 @@ test("frontend and API agree on story event and horizons", async () => {
     assert.ok(contracts.includes(`"${horizon}"`));
     assert.ok(apiModels.includes(`"${horizon}"`));
   }
+});
+
+test("globe uses published geographic boundaries and exposes a persistent theme", async () => {
+  const [globe, dashboard, packageJson] = await Promise.all([
+    readFile(new URL("../components/GlobeScene.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../components/WildfireDashboard.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../package.json", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(globe, /countries-110m\.json/);
+  assert.match(globe, /Math\.abs\(lon - previousLon\) > 180/);
+  assert.doesNotMatch(globe, /const continental/);
+  assert.match(packageJson, /"world-atlas": "2\.0\.2"/);
+  assert.match(dashboard, /ember-theme/);
+  assert.match(dashboard, /Switch to.*theme/);
 });

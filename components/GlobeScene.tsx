@@ -2,16 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { feature } from "topojson-client";
+import countriesTopology from "world-atlas/countries-110m.json";
+import type { FeatureCollection, Geometry } from "geojson";
+import type { GeometryCollection, Topology } from "topojson-specification";
 import type { LayerKey, StoryFrame } from "@/lib/contracts";
 
 interface GlobeSceneProps {
   frame: StoryFrame;
   layers: Record<LayerKey, boolean>;
+  theme: "dark" | "light";
 }
 
 const EVROS = { lat: 40.93, lon: 25.86 };
 
-function toVector(lat: number, lon: number, radius: number) {
+export function toVector(lat: number, lon: number, radius: number) {
   const phi = (90 - lat) * (Math.PI / 180);
   const theta = (lon + 180) * (Math.PI / 180);
   return new THREE.Vector3(
@@ -32,14 +37,49 @@ function lineCircle(radius: number, latitude: number, material: THREE.Material) 
   return new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), material);
 }
 
-export function GlobeScene({ frame, layers }: GlobeSceneProps) {
+export function countrySegments() {
+  const topology = countriesTopology as unknown as Topology<{
+    countries: GeometryCollection;
+  }>;
+  const countries = feature(topology, topology.objects.countries) as FeatureCollection<
+    Geometry
+  >;
+  const points: THREE.Vector3[] = [];
+
+  const addRing = (ring: number[][]) => {
+    for (let index = 1; index < ring.length; index += 1) {
+      const [previousLon, previousLat] = ring[index - 1];
+      const [lon, lat] = ring[index];
+      // Do not draw a chord through the globe when a polygon crosses the date line.
+      if (Math.abs(lon - previousLon) > 180) continue;
+      points.push(
+        toVector(previousLat, previousLon, 1.738),
+        toVector(lat, lon, 1.738),
+      );
+    }
+  };
+
+  for (const country of countries.features) {
+    if (country.geometry?.type === "Polygon") {
+      country.geometry.coordinates.forEach(addRing);
+    } else if (country.geometry?.type === "MultiPolygon") {
+      country.geometry.coordinates.forEach((polygon) => polygon.forEach(addRing));
+    }
+  }
+
+  return points;
+}
+
+export function GlobeScene({ frame, layers, theme }: GlobeSceneProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef(frame);
   const layersRef = useRef(layers);
+  const themeRef = useRef(theme);
   const [webglError, setWebglError] = useState(false);
 
   useEffect(() => { frameRef.current = frame; }, [frame]);
   useEffect(() => { layersRef.current = layers; }, [layers]);
+  useEffect(() => { themeRef.current = theme; }, [theme]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -58,28 +98,37 @@ export function GlobeScene({ frame, layers }: GlobeSceneProps) {
     }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
     mount.appendChild(renderer.domElement);
     renderer.domElement.setAttribute("aria-hidden", "true");
 
     const globe = new THREE.Group();
     scene.add(globe);
 
+    const sphereMaterial = new THREE.MeshPhongMaterial({
+      color: 0x0b2930,
+      emissive: 0x061518,
+      emissiveIntensity: 0.7,
+      shininess: 18,
+      transparent: true,
+      opacity: 0.98,
+    });
     const sphere = new THREE.Mesh(
       new THREE.SphereGeometry(1.72, 96, 96),
-      new THREE.MeshPhongMaterial({
-        color: 0x0b2930,
-        emissive: 0x061518,
-        emissiveIntensity: 0.7,
-        shininess: 18,
-        transparent: true,
-        opacity: 0.98,
-      }),
+      sphereMaterial,
     );
     globe.add(sphere);
 
+    const atmosphereMaterial = new THREE.MeshBasicMaterial({
+      color: 0x7edfc8,
+      transparent: true,
+      opacity: 0.06,
+      side: THREE.BackSide,
+    });
     const atmosphere = new THREE.Mesh(
       new THREE.SphereGeometry(1.78, 64, 64),
-      new THREE.MeshBasicMaterial({ color: 0x7edfc8, transparent: true, opacity: 0.06, side: THREE.BackSide }),
+      atmosphereMaterial,
     );
     globe.add(atmosphere);
 
@@ -94,18 +143,17 @@ export function GlobeScene({ frame, layers }: GlobeSceneProps) {
       globe.add(line);
     }
 
-    const landMaterial = new THREE.PointsMaterial({ color: 0x6c8d68, size: 0.026, transparent: true, opacity: 0.82 });
-    const landPoints: THREE.Vector3[] = [];
-    for (let lat = -55; lat <= 75; lat += 3) {
-      for (let lon = -175; lon <= 175; lon += 3) {
-        const continental =
-          (Math.sin(lon * 0.052) + Math.cos(lat * 0.1) + Math.sin((lon + lat) * 0.035) > 1.22) ||
-          (lon > -12 && lon < 46 && lat > 34 && lat < 70 && Math.sin(lon * 0.18) + Math.cos(lat * 0.2) > -0.3) ||
-          (lon > -82 && lon < -34 && lat > -52 && lat < 10 && Math.cos(lon * 0.11 + lat * 0.08) > -0.2);
-        if (continental) landPoints.push(toVector(lat, lon, 1.735));
-      }
-    }
-    globe.add(new THREE.Points(new THREE.BufferGeometry().setFromPoints(landPoints), landMaterial));
+    const countryMaterial = new THREE.LineBasicMaterial({
+      color: 0x769b78,
+      transparent: true,
+      opacity: 0.86,
+    });
+    const countryLines = new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(countrySegments()),
+      countryMaterial,
+    );
+    countryLines.name = "Natural Earth 1:110m country boundaries";
+    globe.add(countryLines);
 
     const eventAnchor = toVector(EVROS.lat, EVROS.lon, 1.78);
     const focusQuaternion = new THREE.Quaternion().setFromUnitVectors(
@@ -343,6 +391,13 @@ export function GlobeScene({ frame, layers }: GlobeSceneProps) {
     const render = () => {
       const t = clock.getElapsedTime();
       const progress = frameRef.current.hour / 30;
+      const lightTheme = themeRef.current === "light";
+      sphereMaterial.color.setHex(lightTheme ? 0xe6f0ec : 0x0b2930);
+      sphereMaterial.emissive.setHex(lightTheme ? 0x546b66 : 0x061518);
+      sphereMaterial.emissiveIntensity = lightTheme ? 0.18 : 0.7;
+      countryMaterial.color.setHex(lightTheme ? 0x376a58 : 0x769b78);
+      gridMaterial.color.setHex(lightTheme ? 0x78958c : 0x3c716f);
+      atmosphereMaterial.color.setHex(lightTheme ? 0x5b927f : 0x7edfc8);
       if (!userInteracted) {
         const focusProgress = reducedMotion ? 1 : Math.min(1, t / 2.2);
         const eased = 1 - (1 - focusProgress) ** 3;
@@ -363,7 +418,15 @@ export function GlobeScene({ frame, layers }: GlobeSceneProps) {
         0,
         Math.min(detections.length, Math.max(3, Math.ceil(frameRef.current.observationCount / 4))),
       );
-      landMaterial.color.set(layersRef.current.dryness ? 0x9d7a51 : 0x5c8d70);
+      countryMaterial.color.setHex(
+        layersRef.current.dryness
+          ? lightTheme
+            ? 0x85612f
+            : 0x9d7a51
+          : lightTheme
+            ? 0x376a58
+            : 0x769b78,
+      );
       temperatureLayer.visible = layersRef.current.temperature;
       moistureLayer.visible = layersRef.current.moisture;
       scarGroup.visible = layersRef.current.scars;

@@ -3,7 +3,7 @@
 :root {
   --ink: #e8eee9;
   --muted: #83918b;
-  --dim: #52615b;
+  --dim: #6c7d75;
   --line: rgba(183, 205, 194, 0.14);
   --panel: rgba(9, 16, 14, 0.92);
   --green: #9ee4c8;
@@ -675,6 +675,106 @@ input:focus-visible,
   box-shadow: 0 0 7px var(--green);
 }
 
+.app-shell[data-theme="light"] {
+  --ink: #18241f;
+  --muted: #52645c;
+  --dim: #64756d;
+  --line: rgba(33, 65, 53, 0.2);
+  --panel: rgba(248, 251, 249, 0.94);
+  --green: #216f58;
+  --green-bright: #124d3d;
+  --amber: #aa551f;
+  --red: #c74324;
+  --background: #eef3f0;
+  background:
+    radial-gradient(circle at 52% 42%, rgba(79, 142, 120, 0.16), transparent 38%),
+    linear-gradient(135deg, #f7faf8, #edf3ef 56%, #e6eeea);
+}
+
+.app-shell[data-theme="light"] .topbar {
+  background: rgba(248, 251, 249, 0.9);
+}
+
+.app-shell[data-theme="light"] .event-status strong,
+.app-shell[data-theme="light"] .panel h1,
+.app-shell[data-theme="light"] .panel h2,
+.app-shell[data-theme="light"] .wind-card > b,
+.app-shell[data-theme="light"] .metric-grid strong,
+.app-shell[data-theme="light"] .verification div strong {
+  color: #17241f;
+}
+
+.app-shell[data-theme="light"] .lede em,
+.app-shell[data-theme="light"] .driver div span,
+.app-shell[data-theme="light"] .provenance div {
+  color: #3f5149;
+}
+
+.app-shell[data-theme="light"] .risk-card {
+  border-color: rgba(170, 85, 31, 0.3);
+  background:
+    linear-gradient(135deg, rgba(199, 67, 36, 0.09), transparent 65%),
+    rgba(255, 255, 255, 0.7);
+}
+
+.app-shell[data-theme="light"] .risk-range strong {
+  color: #873b1f;
+}
+
+.app-shell[data-theme="light"] .risk-bar,
+.app-shell[data-theme="light"] .driver-bar {
+  background: #d9e3de;
+}
+
+.app-shell[data-theme="light"] .driver-bar i {
+  background: #527565;
+}
+
+.app-shell[data-theme="light"] .globe-stage {
+  background:
+    radial-gradient(circle at 53% 46%, rgba(91, 146, 127, 0.24), rgba(237, 244, 240, 0.3) 50%, rgba(220, 233, 226, 0.88) 91%),
+    linear-gradient(90deg, rgba(207, 222, 214, 0.65), transparent 18%, transparent 82%, rgba(207, 222, 214, 0.65));
+}
+
+.app-shell[data-theme="light"] .event-callout div {
+  text-shadow: 0 1px 8px #f4f8f5;
+}
+
+.app-shell[data-theme="light"] .event-callout strong {
+  color: #533522;
+}
+
+.app-shell[data-theme="light"] .wind-card,
+.app-shell[data-theme="light"] .play-button {
+  background: rgba(33, 111, 88, 0.05);
+}
+
+.app-shell[data-theme="light"] .timeline {
+  background: #f4f8f5;
+}
+
+.app-shell[data-theme="light"] .timeline-main input[type="range"] {
+  background: linear-gradient(90deg, var(--amber) var(--progress), #cbd8d1 var(--progress));
+}
+
+.app-shell[data-theme="light"] .timeline-main input[type="range"]::-webkit-slider-thumb {
+  border-color: #f4f8f5;
+}
+
+.app-shell[data-theme="light"] .info-panel {
+  background: rgba(35, 50, 43, 0.32);
+}
+
+.app-shell[data-theme="light"] .info-panel > div {
+  border-color: rgba(33, 111, 88, 0.25);
+  background: #fbfdfb;
+  box-shadow: 0 24px 70px rgba(29, 45, 37, 0.25);
+}
+
+.app-shell[data-theme="light"] .info-panel p {
+  color: #41544b;
+}
+
 @media (max-width: 1050px) {
   .app-shell { grid-template-rows: 64px auto auto; overflow: visible; }
   .workspace { grid-template-columns: 250px minmax(400px, 1fr); grid-template-rows: 660px auto; }
@@ -709,6 +809,7 @@ input:focus-visible,
   .timeline-labels > span:last-child { display: none; }
   .event-callout { right: 3%; }
   .callout-line { width: 26px; }
+  .drag-hint { max-width: 170px; text-align: right; line-height: 1.45; }
 }
 
 @media (prefers-reduced-motion: reduce) {
