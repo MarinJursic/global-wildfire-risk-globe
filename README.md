@@ -1,10 +1,10 @@
 # EMBER — Global Wildfire Risk & Spread Forecasting Globe
 
-![EMBER social preview](public/og.png)
+![Illustrated EMBER social preview showing a global risk globe and uncertainty rings](public/og.png)
 
-The project-specific PNG above is the repository’s social card. It represents the
-finished product’s Evros focus, uncertainty rings, and wind-field language; it is
-deliberately not labeled as live data.
+The project-specific PNG above is the repository’s **illustrated social card**, not
+an application screenshot. It communicates the Evros focus, uncertainty rings, and
+wind-field language and is deliberately not labeled as live data.
 
 EMBER is a portfolio-grade, laptop-friendly research interface for two related but
 scientifically distinct problems:
@@ -29,16 +29,25 @@ interesting location.
 
 ## Real application capture
 
-![EMBER dashboard running locally](public/ember-dashboard.png)
+![EMBER dashboard running locally in dark theme, with the ignition-risk controls at left and interactive globe at center](public/ember-dashboard.png)
 
 This PNG was captured from the locally running application, after the WebGL globe
 initialized. It is evidence of the executable dashboard—not a design mockup—and shows
-the responsive mission-control shell, horizon selector, animated globe, and story
-replay state. The separate social card remains intentionally illustrative.
+the mission-control shell, horizon selector, interactive globe, and story replay state.
+The separate social card above remains intentionally illustrative.
+
+**How to read the capture:** the left panel answers “how likely is a detectable new
+fire in this cell?”, the center globe locates the replay and overlays its front, and
+the right panel answers “what could the active fire affect?”. The bottom timeline
+compares each forecast frame with its later observation contract. Orange encodes
+hazard/uncertainty; mint encodes environmental context and verification.
 
 ## What you can do
 
 - Orbit an animated Three.js globe auto-focused on the Evros event.
+- Switch between a high-contrast dark control-room theme and a readable daylight
+  theme; the choice persists in local storage and defaults to the operating-system
+  preference on first use.
 - Change the ignition-risk horizon and watch cumulative probability update across
   6-hour, 24-hour, 48-hour, 72-hour, and 7-day windows.
 - Toggle animated wind, temperature, soil-moisture, vegetation-dryness, VIIRS-style
@@ -62,6 +71,23 @@ replay state. The separate social card remains intentionally illustrative.
 - Reduced-motion preference removes automatic replay, front pulsing, and wind motion.
 - If WebGL is unavailable, the app reports that condition while leaving all textual
   forecasts, controls, and metrics usable.
+
+### Geographic and visual correctness
+
+- Country/coastline geometry comes from **Natural Earth 1:110m Admin-0 countries
+  v4.1.0**, converted through `world-atlas@2`; the renderer no longer invents
+  procedural continent shapes.
+- Long segments crossing the ±180° date line are deliberately split so they cannot
+  draw a false chord through the globe.
+- The event marker uses `40.93° N, 25.86° E` in the same latitude/longitude-to-sphere
+  transform as every country boundary and asset overlay.
+- Grid parallels are true spherical latitude circles. Meridians share the globe
+  radius and rotation center.
+- ACES filmic tone mapping and separate ambient, key, and rim lights preserve surface
+  form without making the synthetic overlays appear photographic.
+- Natural Earth’s default country theme is a **de facto boundary viewpoint**. It is
+  appropriate for a small global overview, not cadastral work or a legal statement
+  about disputed boundaries.
 
 ## Demo narrative
 
@@ -117,10 +143,11 @@ flowchart LR
 
 - **Next.js 16 + React 19 + TypeScript**
 - **Three.js** for a real WebGL globe, atmospheric shell, geospatial grid, detections,
-  uncertainty front, and animated wind particles
+  Natural Earth country boundaries, uncertainty front, and animated wind particles
 - SSR product shell with a client-only WebGL scene
 - Responsive layouts for desktop, tablet, and mobile
-- Keyboard-accessible globe and controls, reduced-motion behavior, and WebGL fallback
+- Keyboard-accessible globe and controls, persistent light/dark theme, reduced-motion
+  behavior, and WebGL fallback
 - No external tiles, fonts, keys, cookies, trackers, or runtime CDNs
 
 ### API
@@ -292,13 +319,15 @@ With both development servers running:
 ./scripts/smoke.sh
 ```
 
-The automated suite currently contains 12 frontend/domain/component tests and
+The automated suite currently contains 17 frontend/domain/component tests and
 14 Python tests. It checks:
 
 - server-rendered product content and metadata;
 - real horizon-sensitive probability behavior for every story frame;
 - keyboard horizon navigation, all eight layer toggles, methodology disclosure,
-  replay play/pause, and timeline scrubbing;
+  replay play/pause, timeline scrubbing, and persistent accessible theme switching;
+- replacement of procedural continents with Natural Earth boundaries and explicit
+  date-line splitting;
 - complete exposure coverage for settlements, roads, power lines, forest, and
   protected areas;
 - coordinate, timestamp, unknown-field, query-bound, method, and unknown-event errors;
@@ -363,7 +392,12 @@ incident-command integration, and clear liability boundaries.
 
 - The event geometry and metrics are illustrative, not reconstructed from downloaded
   CEMS or FIRMS files.
-- The dotted land surface is a procedural visual, not a cartographic coastline.
+- Country boundaries are generalized Natural Earth 1:110m v4.1.0 geometry; tiny
+  islands and local coastline detail are intentionally omitted at this global display
+  scale. Natural Earth’s newer upstream revisions are not yet bundled by
+  `world-atlas@2`.
+- Natural Earth’s default de facto boundary worldview is not a neutral legal
+  adjudication of disputed territories.
 - No topography, fuel map, suppression action, spotting, fire-atmosphere coupling,
   or cloud/smoke detection model is present.
 - A directional ellipse cannot represent complex terrain-driven fronts.
@@ -379,6 +413,13 @@ incident-command integration, and clear liability boundaries.
 
 Primary and official references used to shape the product:
 
+- [Natural Earth 1:110m cultural vectors](https://www.naturalearthdata.com/downloads/110m-cultural-vectors/) —
+  the upstream Admin-0 country-geometry family used by the globe; Natural Earth
+  documents the generalization level and default de facto boundary viewpoint. The
+  app’s `world-atlas@2` redistribution specifically packages Natural Earth v4.1.0.
+- [Natural Earth disputed-boundaries policy](https://www.naturalearthdata.com/about/disputed-boundaries-policy/) —
+  explains the default worldview and the availability of alternate point-of-view
+  datasets.
 - [NASA FIRMS overview](https://wiki.earthdata.nasa.gov/spaces/FIRMS/pages/32079892/Fire%2BInformation%2Bfor%2BResource%2BManagement%2BSystem%2BFIRMS) —
   global MODIS and VIIRS active-fire locations; near-real-time detections use the
   VIIRS 375 m Fire and Thermal Anomalies algorithms.

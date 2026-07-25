@@ -15,12 +15,14 @@ const GlobeScene = dynamic(() => import("./GlobeScene").then((module) => module.
 
 const HORIZONS: Horizon[] = ["6h", "24h", "48h", "72h", "7d"];
 const LAYERS = Object.keys(LAYER_LABELS) as LayerKey[];
+type Theme = "dark" | "light";
 
 function formatArea(area: number) {
   return new Intl.NumberFormat("en", { maximumFractionDigits: 0 }).format(area);
 }
 
 export function WildfireDashboard() {
+  const [theme, setTheme] = useState<Theme>("dark");
   const [horizon, setHorizon] = useState<Horizon>("24h");
   const [frameIndex, setFrameIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -38,6 +40,22 @@ export function WildfireDashboard() {
   const frame = STORY_FRAMES[frameIndex];
   const risk = useMemo(() => riskIntervalFor(frame, horizon), [frame, horizon]);
   const exposure = useMemo(() => exposureFor(frame), [frame]);
+
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("ember-theme");
+    const preferredTheme = window.matchMedia("(prefers-color-scheme: light)").matches
+      ? "light"
+      : "dark";
+    const timer = window.setTimeout(() => {
+      setTheme(savedTheme === "light" || savedTheme === "dark" ? savedTheme : preferredTheme);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("ember-theme", theme);
+    document.documentElement.style.colorScheme = theme;
+  }, [theme]);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -70,7 +88,7 @@ export function WildfireDashboard() {
   };
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" data-theme={theme}>
       <header className="topbar">
         <div className="brand-block">
           <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
@@ -86,6 +104,16 @@ export function WildfireDashboard() {
         </div>
         <div className="topbar-meta">
           <span>SIMULATION <b>v0.4.2</b></span>
+          <button
+            className="theme-toggle"
+            type="button"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            aria-pressed={theme === "light"}
+            title={`Use ${theme === "dark" ? "light" : "dark"} theme`}
+            onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+          >
+            <span aria-hidden="true">{theme === "dark" ? "☼" : "☾"}</span>
+          </button>
           <button
             type="button"
             aria-label={showInfo ? "Close information panel" : "Open information panel"}
@@ -192,7 +220,7 @@ export function WildfireDashboard() {
             <p>40.93° N · 25.86° E</p>
           </div>
           <div className="north-indicator"><span>N</span><i /></div>
-          <GlobeScene frame={frame} layers={layers} />
+          <GlobeScene frame={frame} layers={layers} theme={theme} />
           <div className="event-callout">
             <span className="callout-line" />
             <div>
@@ -206,7 +234,7 @@ export function WildfireDashboard() {
             <span><i className="legend-forecast" />Forecast p50</span>
             <span><i className="legend-uncertainty" />90% envelope</span>
           </div>
-          <span className="drag-hint">DRAG TO ORBIT</span>
+          <span className="drag-hint">DRAG / ARROWS TO ORBIT · HOME TO EVROS</span>
         </section>
 
         <aside className="panel panel-right">

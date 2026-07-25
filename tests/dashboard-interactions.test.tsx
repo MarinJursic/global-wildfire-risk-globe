@@ -12,10 +12,11 @@ vi.mock("next/dynamic", () => ({
 }));
 
 beforeEach(() => {
+  window.localStorage.clear();
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
-    value: vi.fn().mockImplementation(() => ({
-      matches: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: query.includes("prefers-reduced-motion"),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
     })),
@@ -87,5 +88,18 @@ describe("wildfire dashboard controls", () => {
     });
     expect(screen.getByText(/ACTIVE FRONT · T\+30H/i)).toBeTruthy();
     expect(screen.getByRole("button", { name: "Play story replay" })).toBeTruthy();
+  });
+
+  it("switches theme accessibly and persists the choice", () => {
+    const { container } = render(<WildfireDashboard />);
+    const shell = container.querySelector(".app-shell");
+    const switcher = screen.getByRole("button", { name: "Switch to light theme" });
+
+    expect(shell?.getAttribute("data-theme")).toBe("dark");
+    fireEvent.click(switcher);
+
+    expect(shell?.getAttribute("data-theme")).toBe("light");
+    expect(window.localStorage.getItem("ember-theme")).toBe("light");
+    expect(screen.getByRole("button", { name: "Switch to dark theme" })).toBeTruthy();
   });
 });
