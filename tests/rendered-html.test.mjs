@@ -35,7 +35,7 @@ test("server-renders the wildfire research product shell", async () => {
   assert.match(html, /Alexandroupolis/);
   assert.match(html, /Forecast \/ observation/i);
   assert.match(html, /<title>EMBER \/ Global Wildfire Intelligence<\/title>/i);
-  assert.doesNotMatch(html, /codex-preview|Your site is taking shape/);
+  assert.doesNotMatch(html, /starter-preview|Your site is taking shape/);
 });
 
 test("removes disposable starter assets and includes scientific contracts", async () => {
