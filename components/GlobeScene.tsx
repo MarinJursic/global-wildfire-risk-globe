@@ -47,6 +47,15 @@ export function toVector(lat: number, lon: number, radius: number) {
   );
 }
 
+export function localTangentQuaternion(lat: number, lon: number) {
+  const normal = toVector(lat, lon, 1).normalize();
+  const east = new THREE.Vector3(0, 1, 0).cross(normal).normalize();
+  const north = normal.clone().cross(east).normalize();
+  return new THREE.Quaternion().setFromRotationMatrix(
+    new THREE.Matrix4().makeBasis(east, north, normal),
+  );
+}
+
 function lineCircle(radius: number, latitude: number, material: THREE.Material) {
   const points: THREE.Vector3[] = [];
   const latRadius = radius * Math.cos(THREE.MathUtils.degToRad(latitude));
@@ -126,7 +135,11 @@ export function projectGlobePoint(
   };
 }
 
-function perimeterPoints(xRadius: number, yRadius: number, z = 0.012) {
+function illustrativePerimeterPoints(
+  xRadius: number,
+  yRadius: number,
+  z = 0.012,
+) {
   const points: THREE.Vector3[] = [];
   for (let step = 0; step <= 80; step += 1) {
     const angle = (step / 80) * Math.PI * 2;
@@ -141,6 +154,29 @@ function perimeterPoints(xRadius: number, yRadius: number, z = 0.012) {
     );
   }
   return points;
+}
+
+function localEvidencePoint(
+  point: { latitude: number; longitude: number },
+  incident: HistoricIncident,
+  z = 0.018,
+) {
+  const radiansPerDegree = Math.PI / 180;
+  const tangentRadius = 1.75;
+  const eastScale =
+    tangentRadius *
+    radiansPerDegree *
+    Math.cos(THREE.MathUtils.degToRad(incident.latitude));
+  const northScale = tangentRadius * radiansPerDegree;
+  return new THREE.Vector3(
+    (point.longitude - incident.longitude) *
+      eastScale *
+      incident.evidence.displayMagnification,
+    (point.latitude - incident.latitude) *
+      northScale *
+      incident.evidence.displayMagnification,
+    z,
+  );
 }
 
 function makeSurfaceField(
@@ -335,52 +371,27 @@ export function GlobeScene({
     countryLines.name = "Natural Earth 1:110m country boundaries";
     globe.add(countryLines);
 
-    // Deterministic global scalar-field fixtures. Each control owns a distinct
-    // visible encoding instead of merely recoloring another layer.
+    // Normalized global context encodings. Numeric ranges and the fact that
+    // these are not raw grids are disclosed in the quantitative UI legend.
     const temperatureField = makeSurfaceField(
-      "temperature-field-fixture",
+      "normalized-temperature-context",
       0xff8f56,
       0.2,
       1.02,
     );
     const moistureField = makeSurfaceField(
-      "soil-moisture-field-fixture",
+      "normalized-soil-moisture-context",
       0x4bc3d4,
       2.1,
       1.08,
     );
     const drynessField = makeSurfaceField(
-      "fuel-dryness-field-fixture",
+      "derived-dryness-context",
       0xffd36a,
       4.2,
       1.13,
     );
     globe.add(temperatureField, moistureField, drynessField);
-
-    const windGroup = new THREE.Group();
-    windGroup.name = "wind-vector-fixture";
-    const windMaterial = new THREE.LineBasicMaterial({
-      color: 0xe9fbf4,
-      transparent: true,
-      opacity: 0.72,
-    });
-    for (let latitude = -60; latitude <= 60; latitude += 20) {
-      for (let longitude = -160; longitude <= 160; longitude += 40) {
-        const start = toVector(latitude, longitude, 1.762);
-        const end = toVector(
-          latitude + Math.sin(THREE.MathUtils.degToRad(longitude)) * 2.5,
-          longitude + 7,
-          1.762,
-        );
-        windGroup.add(
-          new THREE.Line(
-            new THREE.BufferGeometry().setFromPoints([start, end]),
-            windMaterial,
-          ),
-        );
-      }
-    }
-    globe.add(windGroup);
 
     const incidentGroups = new Map<string, THREE.Group>();
     const assetGroups = new Map<string, THREE.Group>();
@@ -414,9 +425,11 @@ export function GlobeScene({
       markerPositions.set(historicIncident.id, anchor);
       const group = new THREE.Group();
       group.position.copy(anchor);
-      group.quaternion.setFromUnitVectors(
-        new THREE.Vector3(0, 0, 1),
-        anchor.clone().normalize(),
+      group.quaternion.copy(
+        localTangentQuaternion(
+          historicIncident.latitude,
+          historicIncident.longitude,
+        ),
       );
       group.userData.incidentId = historicIncident.id;
 
@@ -432,18 +445,22 @@ export function GlobeScene({
       marker.name = "historic-incident-marker";
       group.add(marker);
 
-      const observed = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints(
-          perimeterPoints(0.11, 0.074, 0.014),
-        ),
-        observedMaterial,
-      );
-      observed.name = "observed-perimeter";
-      group.add(observed);
+      for (const perimeterRing of historicIncident.evidence.perimeterRings) {
+        const observed = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(
+            perimeterRing.map((point) =>
+              localEvidencePoint(point, historicIncident),
+            ),
+          ),
+          observedMaterial,
+        );
+        observed.name = "cems-mapped-perimeter";
+        group.add(observed);
+      }
 
       const forecast = new THREE.Line(
         new THREE.BufferGeometry().setFromPoints(
-          perimeterPoints(0.14, 0.095, 0.017),
+          illustrativePerimeterPoints(0.14, 0.095, 0.022),
         ),
         forecastMaterial,
       );
@@ -458,20 +475,12 @@ export function GlobeScene({
       envelope.name = "illustrative-forecast-envelope";
       group.add(envelope);
 
-      const detections: THREE.Vector3[] = [];
-      for (let index = 0; index < 42; index += 1) {
-        const angle = index * 2.39996;
-        const radius = 0.028 + (index % 9) * 0.013;
-        detections.push(
-          new THREE.Vector3(
-            Math.cos(angle) * radius,
-            Math.sin(angle) * radius * 0.7,
-            0.021,
+      const evidencePoints = new THREE.Points(
+        new THREE.BufferGeometry().setFromPoints(
+          historicIncident.evidence.evidencePoints.map((point) =>
+            localEvidencePoint(point, historicIncident, 0.026),
           ),
-        );
-      }
-      const detectionPoints = new THREE.Points(
-        new THREE.BufferGeometry().setFromPoints(detections),
+        ),
         new THREE.PointsMaterial({
           color: 0xffe0a1,
           size: 0.027,
@@ -479,22 +488,68 @@ export function GlobeScene({
           opacity: 0.9,
         }),
       );
-      detectionPoints.name = "cached-detection-sample";
-      group.add(detectionPoints);
+      evidencePoints.name = "cems-mapped-evidence-points";
+      group.add(evidencePoints);
 
-      const scar = new THREE.Mesh(
-        new THREE.CircleGeometry(0.105, 64),
-        new THREE.MeshBasicMaterial({
-          color: 0x4f241a,
-          transparent: true,
-          opacity: 0.72,
-          side: THREE.DoubleSide,
-          depthWrite: false,
-        }),
+      const primaryRing = historicIncident.evidence.perimeterRings[0].map(
+        (point) => localEvidencePoint(point, historicIncident, 0.011),
       );
-      scar.position.z = 0.006;
-      scar.name = "burn-scar-fixture";
-      group.add(scar);
+      if (primaryRing.length > 2) {
+        const shape = new THREE.Shape(
+          primaryRing.map((point) => new THREE.Vector2(point.x, point.y)),
+        );
+        const scar = new THREE.Mesh(
+          new THREE.ShapeGeometry(shape),
+          new THREE.MeshBasicMaterial({
+            color: 0x4f241a,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          }),
+        );
+        scar.position.z = 0.011;
+        scar.name = "cems-mapped-burn-area";
+        group.add(scar);
+      }
+
+      for (const front of historicIncident.evidence.fireFronts) {
+        const fireFront = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(
+            front.map((point) =>
+              localEvidencePoint(point, historicIncident, 0.03),
+            ),
+          ),
+          new THREE.LineBasicMaterial({
+            color: 0xff5d3d,
+            transparent: true,
+            opacity: 0.95,
+          }),
+        );
+        fireFront.name = "cems-mapped-fire-front";
+        group.add(fireFront);
+      }
+
+      const flowDegrees =
+        (historicIncident.evidence.weather.windFromDegrees + 180) % 360;
+      const flowRadians = THREE.MathUtils.degToRad(flowDegrees);
+      const windDirection = new THREE.Vector3(
+        Math.sin(flowRadians),
+        Math.cos(flowRadians),
+        0,
+      ).normalize();
+      for (const offset of [-0.055, 0, 0.055]) {
+        const windArrow = new THREE.ArrowHelper(
+          windDirection,
+          new THREE.Vector3(-windDirection.y * offset, windDirection.x * offset, 0.036),
+          0.105,
+          0xe9fbf4,
+          0.025,
+          0.016,
+        );
+        windArrow.name = "nasa-power-wind-vector";
+        group.add(windArrow);
+      }
 
       globe.add(group);
       incidentGroups.set(historicIncident.id, group);
@@ -748,7 +803,6 @@ export function GlobeScene({
       gridMaterial.color.setHex(light ? 0xd1dfdc : 0x9db1ac);
       atmosphereMaterial.color.setHex(light ? 0x72b9dc : 0x78c9e8);
 
-      const progress = frameRef.current.hour / 30;
       const layerVisibility = globeLayerState(layersRef.current);
       for (const [id, group] of incidentGroups) {
         const active = id === activeIncident.id;
@@ -759,15 +813,9 @@ export function GlobeScene({
           } else {
             child.visible = active;
           }
-          if (child.name === "observed-perimeter") {
-            child.scale.set(
-              0.56 + progress * 1.25,
-              0.56 + progress * 1.12,
-              1,
-            );
-          }
           if (child.name === "illustrative-forecast-p50") {
             child.visible = active && layerVisibility.uncertainty;
+            const progress = frameRef.current.hour / 30;
             child.scale.set(
               0.62 + progress * 1.3,
               0.6 + progress * 1.2,
@@ -776,37 +824,26 @@ export function GlobeScene({
           }
           if (child.name === "illustrative-forecast-envelope") {
             child.visible = active && layerVisibility.uncertainty;
+            const progress = frameRef.current.hour / 30;
             child.scale.setScalar(0.58 + progress * 1.08);
           }
-          if (child.name === "cached-detection-sample") {
+          if (child.name === "cems-mapped-evidence-points") {
             child.visible = active && layerVisibility.detections;
-            if (child instanceof THREE.Points) {
-              child.geometry.setDrawRange(
-                0,
-                Math.min(
-                  42,
-                  Math.max(4, Math.ceil(frameRef.current.observationCount / 2)),
-                ),
-              );
-            }
           }
-          if (child.name === "burn-scar-fixture") {
+          if (child.name === "cems-mapped-fire-front") {
+            child.visible = active && layerVisibility.detections;
+          }
+          if (child.name === "cems-mapped-burn-area") {
             child.visible = active && layerVisibility.scars;
-            child.scale.set(
-              0.48 + progress * 1.2,
-              0.48 + progress * 1.05,
-              1,
-            );
+          }
+          if (child.name === "nasa-power-wind-vector") {
+            child.visible = active && layerVisibility.wind;
           }
         });
       }
       temperatureField.visible = layerVisibility.temperature;
       moistureField.visible = layerVisibility.moisture;
       drynessField.visible = layerVisibility.dryness;
-      windGroup.visible = layerVisibility.wind;
-      if (layerVisibility.wind && !reducedMotion) {
-        windGroup.rotation.y += delta * 0.045;
-      }
       gridMaterial.opacity = light ? 0.1 : 0.075;
       for (const [id, assetGroup] of assetGroups) {
         assetGroup.visible =

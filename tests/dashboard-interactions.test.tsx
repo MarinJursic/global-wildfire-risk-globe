@@ -58,14 +58,14 @@ describe("wildfire dashboard controls", () => {
   it("toggles every visual layer with pressed-state feedback", () => {
     render(<WildfireDashboard />);
     const layerNames = [
-      "Wind field",
-      "Temperature",
-      "Soil moisture",
-      "Vegetation dryness",
-      "Detection sample fixture",
-      "Forecast envelope",
-      "Historical fire scars",
-      "Assets at risk",
+      "Historic-day wind",
+      "Temperature context",
+      "Soil wetness context",
+      "Derived dryness context",
+      "CEMS mapped evidence",
+      "Scenario envelope",
+      "CEMS mapped burn area",
+      "Synthetic exposure test",
     ];
 
     for (const name of layerNames) {
@@ -92,7 +92,7 @@ describe("wildfire dashboard controls", () => {
     fireEvent.change(screen.getByRole("slider", { name: "Story replay time" }), {
       target: { value: "5" },
     });
-    expect(screen.getByText(/ACTIVE FRONT · T\+30H/i)).toBeTruthy();
+    expect(screen.getAllByText(/02 Sep · 10:00/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Play story replay" })).toBeTruthy();
   });
 
@@ -123,7 +123,19 @@ describe("wildfire dashboard controls", () => {
       }),
     ).toBeTruthy();
     expect(screen.getAllByText("EMSR715").length).toBeGreaterThan(0);
-    expect(screen.getByText(/does not request a live fire service/i)).toBeTruthy();
+    expect(screen.getByText(/does not request a live fire or weather service/i)).toBeTruthy();
+  });
+
+  it("makes archive evidence, units, and non-operational hierarchy explicit", () => {
+    render(<WildfireDashboard />);
+
+    expect(screen.getByText("CLOSED HISTORIC CASE")).toBeTruthy();
+    expect(screen.getByText(/CEMS EMSR686 Monitoring 08/i)).toBeTruthy();
+    expect(screen.getByText(/93,511/)).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Layer units and scales" })).toBeTruthy();
+    expect(screen.getAllByText(/5\.55 m\/s/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/arrows point downwind/i)).toBeTruthy();
+    expect(screen.getByText(/normalized encodings, not gridded measurements/i)).toBeTruthy();
   });
 
   it("manages focus and Escape for the provenance dialog", () => {

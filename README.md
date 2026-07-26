@@ -1,15 +1,16 @@
-# EMBER — Global Wildfire Risk & Spread Forecasting Globe
+# Ember Atlas
 
-[![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/global-wildfire-risk-globe/)
-[![Preview status](https://github.com/MarinJursic/global-wildfire-risk-globe/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/global-wildfire-risk-globe/actions/workflows/pages.yml)
+[![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/EmberAtlas/)
+[![Preview status](https://github.com/MarinJursic/EmberAtlas/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/EmberAtlas/actions/workflows/pages.yml)
 
-EMBER is a full-screen planetary incident atlas for exploring historic wildfire
+Ember Atlas is a full-screen planetary incident atlas for exploring historic wildfire
 activations and clearly separated research forecasts. The globe—not a panel—is the
 primary workspace. It combines three complementary tasks:
 
-1. **Historic incident replay** locates documented Copernicus Emergency Management
-   Service activations in Greece, Chile, and Western Australia.
-2. **Ignition-risk exploration** displays an illustrative interval for a *new
+1. **Historic incident evidence** locates documented Copernicus Emergency Management
+   Service activations and renders compact derivatives of official CEMS burnt-area,
+   active-flame, and fire-front vectors.
+2. **Research-scenario exploration** displays an illustrative interval for a *new
    detectable fire* over 6-hour, 24-hour, 48-hour, 72-hour, and 7-day horizons.
    It is a deterministic interface fixture, not a calibrated alert probability.
 3. **Active-fire spread forecasting** begins after a detection and estimates spread
@@ -17,16 +18,18 @@ primary workspace. It combines three complementary tasks:
 
 The default view opens on the 2023 Evros activation (`EMSR686`). The incident index
 also includes Valparaíso, Chile (`EMSR715`) and Wooroloo / the Perth Hills,
-Australia (`EMSR500`). Every example is a bundled deterministic artifact, so the
-atlas works without credentials, runtime tile services, or hidden downloads.
+Australia (`EMSR500`). CEMS vector samples and NASA POWER incident-day point values
+are checked into the TypeScript data layer as compact deterministic derivatives, so
+the atlas works without credentials, runtime tile services, or hidden downloads.
 
-> **Scientific and safety boundary:** EMBER is a research demonstration, not an
+> **Scientific and safety boundary:** Ember Atlas is a research demonstration, not an
 > operational fire-alert, evacuation, or incident-command system. Historic
-> locations, activation identifiers, and specifically cited product summaries come
-> from public sources. The compact perimeter geometry, sampled detections, weather
-> fields, and forecasts are deterministic fixtures. They are not current
-> observations or authoritative CEMS perimeter products and must not be used for
-> emergency decisions.
+> locations, activation identifiers, mapped areas, perimeter shapes, and the Evros
+> active-flame/front evidence derive from the exact public CEMS vector packages
+> listed below. Incident-day point meteorology comes from cited NASA POWER/MERRA-2
+> responses. Geometry is sampled and magnified for globe legibility, scalar context
+> dots are normalized encodings rather than raw grids, and every forecast remains an
+> authored research scenario. Nothing is current or suitable for emergency decisions.
 
 ## Planetary atlas interaction
 
@@ -39,22 +42,23 @@ atlas works without credentials, runtime tile services, or hidden downloads.
   is unavailable.
 - Select Greece, Chile, or Australia from the incident index. Projected labels track
   their latitude/longitude and disappear when they move behind the globe.
-- Scrub the bottom observation filmstrip. Solid amber is the normalized perimeter
-  fixture; dashed red is an illustrative p50 forecast; cyan is its illustrative
+- Scrub the bottom model filmstrip. Solid amber is a shape-preserving sample of the
+  selected CEMS perimeter; dashed red is an illustrative p50 scenario; cyan is its
   uncertainty envelope.
 - Open the provenance ledger at any time. It explicitly identifies the app as a
   historic, cached, non-live replay.
 
 ## Continuous app walkthrough
 
-[![Continuous EMBER application walkthrough showing the Evros wildfire globe, forecast controls, theme change, and source ledger](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
+[![Continuous Ember Atlas walkthrough showing the Evros wildfire globe, forecast controls, theme change, and source ledger](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
 
 [Watch or download the full-resolution MP4](docs/walkthrough/app-walkthrough.mp4)
 · [Open the walkthrough poster](docs/walkthrough/app-walkthrough-poster.jpg)
 
 This is one uninterrupted recording of the executable atlas. It opens on the full
-NASA-textured Earth at Evros, plays the historic observation sequence, refocuses on
-Valparaíso, switches theme, and opens the accessible source ledger.
+NASA-textured Earth at Evros, distinguishes the sampled CEMS evidence from the
+illustrative model sequence, refocuses on Valparaíso, switches theme, and opens the
+accessible source ledger.
 Every state transition is rendered by the running application.
 
 ## What you can do
@@ -67,11 +71,13 @@ Every state transition is rendered by the running application.
 - Change the ignition-risk horizon and watch the illustrative interval update across
   6-hour, 24-hour, 48-hour, 72-hour, and 7-day windows under a repeated 24-hour
   hazard assumption.
-- Toggle eight independent renderer layers: moving wind vectors; temperature,
-  soil-moisture, and vegetation-dryness scalar-field samples; detection-sample
-  fixtures shaped after the VIIRS interface contract; forecast uncertainty;
-  time-scaled historical scars; and the active
-  incident's synthetic asset-at-risk corridor and sites.
+- Toggle eight independent renderer layers: NASA POWER incident-day wind vectors;
+  normalized temperature, soil-wetness, and derived-dryness context; CEMS mapped
+  evidence points; scenario uncertainty; a filled CEMS burn-area shape; and the
+  explicitly synthetic asset-at-risk test.
+- Read the quantitative legend in units: °C, 0–1 surface-soil-wetness fraction,
+  derived 0–1 dryness (`1 − wetness`), and 10 m wind in m/s with meteorological
+  *from* direction in degrees. Wind arrows point downwind.
 - Play or scrub each six-step observation sequence.
 - Compare the p50 forecast outline with the observation outline while affected area,
   settlement, road, power-line, forest, protected-area, IoU, and arrival-time metrics
@@ -110,6 +116,15 @@ Every state transition is rendered by the running application.
   latitude/longitude-to-sphere transform as the country boundaries. The infrastructure
   geometry is deliberately labeled as an interaction fixture, not an authoritative
   road, utility, or facility inventory.
+- Burn-perimeter lines preserve samples of official CEMS polygon exteriors. Local
+  tangent-plane display magnification is explicit in the inspector: 8× for Evros,
+  18× for Valparaíso, and 14× for Wooroloo. Magnification makes small incident
+  footprints legible on a full-Earth canvas; it does not change the displayed CEMS
+  area statistic.
+- Evros includes all 40 photo-interpreted active-flame coordinates in CEMS Monitoring
+  02 plus compact samples of mapped fire-front lines. The other two cases label
+  their points as official burn-polygon representative/boundary samples—not thermal
+  detections.
 - Grid parallels are true spherical latitude circles. Meridians share the globe
   radius and rotation center.
 - ACES filmic tone mapping, a low-opacity ocean sheen, a restrained atmospheric
@@ -126,9 +141,11 @@ flowchart LR
     subgraph Browser["Next.js / TypeScript"]
         UI["Planetary incident atlas"]
         Globe["Three.js globe"]
-        Replay["Three historic replay artifacts"]
+        Replay["Three compact CEMS evidence derivatives"]
+        Weather["Bundled NASA POWER point values"]
         UI --> Globe
         Replay --> UI
+        Weather --> UI
     end
 
     subgraph API["FastAPI / Python"]
@@ -144,7 +161,7 @@ flowchart LR
     subgraph Future["Production adapters"]
         FIRMS["NASA FIRMS / VIIRS"]
         ERA5["ERA5-Land weather"]
-        CEMS["Copernicus perimeters"]
+        CEMS["Full-resolution CEMS products"]
     end
 
     UI -. typed HTTP contracts .-> API
@@ -156,8 +173,9 @@ flowchart LR
 ### Frontend
 
 - **Next.js 16 + React 19 + TypeScript**
-- **Three.js** for a real WebGL globe, atmospheric shell, geospatial grid, detections,
-  Natural Earth country boundaries, uncertainty front, and animated wind particles
+- **Three.js** for a real WebGL globe, atmospheric shell, geospatial grid, compact
+  CEMS evidence, Natural Earth country boundaries, scenario uncertainty, and
+  incident-day wind vectors
 - SSR product shell with a client-only WebGL scene
 - Responsive layouts for desktop, tablet, and mobile
 - Keyboard-accessible globe and controls, persistent light/dark theme, reduced-motion
@@ -175,14 +193,27 @@ flowchart LR
 - Exposure summaries and monotonic replay-verification metrics
 - Explicit provenance and caveat fields in every forecast response
 
-### Why the demo is deterministic
+### Why runtime behavior is deterministic
 
 An operational system depends on satellite availability, cloud cover, weather
-latency, licensing/quotas, and substantial geospatial preprocessing. A deterministic
-adapter gives the portfolio demo three valuable properties: it always works offline,
-tests are reproducible, and synthetic outputs cannot be mistaken for current alerts.
-The request/response shapes are intentionally production-like so real data adapters
-can replace the simulation without redesigning the UI.
+latency, licensing/quotas, and substantial geospatial preprocessing. This repository
+precomputes small, reviewable evidence derivatives from public files and never polls
+them at runtime. That makes the app work offline and makes evidence rendering
+reproducible. Forecast endpoints remain deterministic synthetic adapters, with typed
+request/response shapes that production data and model services could replace.
+
+### Historic evidence provenance
+
+| Case | Bundled historic evidence | Exact public product | Incident-day meteorology |
+| --- | --- | --- | --- |
+| Evros 2023 | 48-point sampled perimeter, all 40 mapped active flames, compact fire-front samples, 93,511.0 ha | [EMSR686 Monitoring 08 vectors](https://rapidmapping.emergency.copernicus.eu/backend/EMSR686/AOI01/DEL_MONIT08/EMSR686_AOI01_DEL_MONIT08_v1.zip) and [Monitoring 02 vectors](https://rapidmapping.emergency.copernicus.eu/backend/EMSR686/AOI01/DEL_MONIT02/EMSR686_AOI01_DEL_MONIT02_v3.zip) | [NASA POWER 23 Aug 2023 UTC JSON](https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M%2CWS10M%2CWD10M%2CGWETTOP&community=AG&longitude=25.86&latitude=40.93&start=20230823&end=20230823&format=JSON&time-standard=UTC) |
+| Valparaíso 2024 | sampled exteriors of the two largest official polygons, 24 representative points, 8,718.2 ha | [EMSR715 AOI01 delineation vectors](https://rapidmapping.emergency.copernicus.eu/backend/EMSR715/AOI01/DEL_PRODUCT/EMSR715_AOI01_DEL_PRODUCT_v2.zip) | [NASA POWER 05 Feb 2024 UTC JSON](https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M%2CWS10M%2CWD10M%2CGWETTOP&community=AG&longitude=-71.47&latitude=-33.05&start=20240205&end=20240205&format=JSON&time-standard=UTC) |
+| Wooroloo 2021 | sampled largest official perimeter and 16 boundary samples, 10,671.8 ha | [EMSR500 Monitoring 01 vectors](https://cems-mapping-website.s3.eu-west-1.amazonaws.com/static/activations/EMSR500/EMSR500_AOI01_DEL_MONIT01_r1_RTP01_v1_vector.zip) | [NASA POWER 02 Feb 2021 UTC JSON](https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M%2CWS10M%2CWD10M%2CGWETTOP&community=AG&longitude=116.32&latitude=-31.8&start=20210202&end=20210202&format=JSON&time-standard=UTC) |
+
+NASA POWER returns source-native-resolution daily MERRA-2/POWER values. The bundle
+stores 2 m temperature, 10 m wind speed and meteorological-from direction, and
+surface soil wetness. Those point values provide incident-day context; they are not
+station observations or a spatial fire-weather field.
 
 ## Repository map
 
@@ -196,6 +227,7 @@ can replace the simulation without redesigning the UI.
 │   └── WildfireDashboard.tsx  Atlas rails, inspector, provenance, and filmstrip
 ├── lib/
 │   ├── contracts.ts           Frontend domain types
+│   ├── historic-evidence.ts   Compact CEMS geometry + NASA POWER values
 │   ├── incidents.ts           Three replay artifacts and source manifests
 │   └── story.ts               Forecast/risk transforms
 ├── backend/
@@ -337,7 +369,7 @@ With both development servers running:
 ./scripts/smoke.sh
 ```
 
-The automated suite currently contains 30 frontend/domain/component tests and
+The automated suite currently contains 38 frontend/domain/component tests and
 14 Python tests. It checks:
 
 - server-rendered product content and metadata;
@@ -346,6 +378,8 @@ The automated suite currently contains 30 frontend/domain/component tests and
   replay play/pause, timeline scrubbing, and persistent accessible theme switching;
 - replacement of procedural continents with Natural Earth boundaries and explicit
   date-line splitting;
+- closure, coordinate bounds, exact source resolution, and unit bounds for every
+  bundled CEMS/NASA POWER evidence record, including all 40 Evros flame points;
 - complete exposure coverage for settlements, roads, power lines, forest, and
   protected areas;
 - coordinate, timestamp, unknown-field, query-bound, method, and unknown-event errors;
@@ -410,8 +444,13 @@ incident-command integration, and clear liability boundaries.
 
 ## Limitations
 
-- The event geometry and metrics are illustrative, not reconstructed from downloaded
-  CEMS or FIRMS files.
+- Historic perimeter/evidence geometry is a compact derivative of downloaded CEMS
+  products, not a redistribution of full-resolution source data. Equal-distance
+  samples and explicit cartographic magnification preserve recognizability, not
+  survey-grade scale or topology.
+- NASA POWER values are daily gridded reanalysis context at a single point, not local
+  station observations. Temperature/wetness/dryness dots are normalized visual
+  encodings and must not be read as a spatial meteorology field.
 - Country boundaries are generalized Natural Earth 1:110m v4.1.0 geometry; tiny
   islands and local coastline detail are intentionally omitted at this global display
   scale. Natural Earth’s newer upstream revisions are not yet bundled by
@@ -424,8 +463,10 @@ incident-command integration, and clear liability boundaries.
 - The displayed risk interval is illustrative. This demo does not contain a fitted
   calibration dataset, and the horizon transform assumes a repeated independent
   24-hour hazard.
-- Perimeter, detection, and asset-exposure values are deterministic area/progress
-  fixtures rather than measurements against mapped operational assets.
+- Scenario-filmstrip area/progress, forecast, verification, and asset-exposure values
+  remain authored deterministic fixtures. Only the separately labeled historic
+  evidence card, mapped geometry, evidence points, and incident-day weather values
+  have the source provenance documented above.
 - IoU and arrival-time error follow deterministic replay curves; they are not a
   published evaluation result.
 - The web app does not poll live sources and remains intentionally safe to demo offline.
@@ -455,8 +496,22 @@ Primary and official references used to shape the product:
 - [NASA FIRMS active-fire downloads](https://firms.modaps.eosdis.nasa.gov/active_fire/) —
   current delivery formats and the recommendation to use standard products for
   latency-insensitive scientific analysis.
+- [NASA POWER Daily API](https://power.larc.nasa.gov/docs/services/api/temporal/daily/) —
+  the official API contract used to bundle source-native-resolution daily 2 m
+  temperature, 10 m wind, wind direction, and surface-soil-wetness point values.
+- [NASA POWER wind methodology](https://power.larc.nasa.gov/docs/methodology/meteorology/wind/) —
+  documents MERRA-2-derived wind parameters and the meteorological convention that
+  direction is where wind comes from, clockwise from north.
 - [Copernicus Climate Data Store: ERA5-Land hourly data](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land?tab=overview) —
   hourly global land variables at 0.1° distribution / 9 km native resolution.
+- [Copernicus EMSR686 Monitoring 08 vectors](https://rapidmapping.emergency.copernicus.eu/backend/EMSR686/AOI01/DEL_MONIT08/EMSR686_AOI01_DEL_MONIT08_v1.zip) —
+  Evros burnt-area perimeter and 93,511.0 ha mapped-area source.
+- [Copernicus EMSR686 Monitoring 02 vectors](https://rapidmapping.emergency.copernicus.eu/backend/EMSR686/AOI01/DEL_MONIT02/EMSR686_AOI01_DEL_MONIT02_v3.zip) —
+  source for 40 active-flame points and mapped fire fronts rendered in the case.
+- [Copernicus EMSR715 AOI01 delineation vectors](https://rapidmapping.emergency.copernicus.eu/backend/EMSR715/AOI01/DEL_PRODUCT/EMSR715_AOI01_DEL_PRODUCT_v2.zip) —
+  Valparaíso burnt-area polygons and 8,718.2 ha mapped total.
+- [Copernicus EMSR500 Monitoring 01 vectors](https://cems-mapping-website.s3.eu-west-1.amazonaws.com/static/activations/EMSR500/EMSR500_AOI01_DEL_MONIT01_r1_RTP01_v1_vector.zip) —
+  Wooroloo burnt-area polygon and 10,671.8 ha mapped total.
 - [Copernicus: European State of the Climate 2023 wildfires](https://climate.copernicus.eu/esotc/2023/wildfires) —
   context for the approximately 96,000 ha Alexandroupolis event.
 - [Copernicus EMS activation EMSN166](https://mapping.emergency.copernicus.eu/activations/EMSN166/) —
@@ -465,7 +520,8 @@ Primary and official references used to shape the product:
 ## License
 
 This demonstration code is provided for portfolio and educational use. The repository
-bundles a credited NASA Blue Marble derivative and the Natural Earth geometry described
-in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Operational fire, weather, and
-emergency-management datasets are not redistributed; consult each official source for
-its current license, attribution, and acceptable-use requirements.
+bundles a credited NASA Blue Marble derivative, Natural Earth geometry, and small
+coordinate/value derivatives from the cited CEMS and NASA POWER responses as
+described in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Full operational
+datasets are not redistributed; consult each official source for current license,
+attribution, and acceptable-use requirements.

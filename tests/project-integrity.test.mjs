@@ -8,7 +8,7 @@ test("README preserves scientific honesty and reproducible setup", async () => {
   assert.match(readme, /npm run build/);
   assert.match(readme, /pytest/);
   assert.match(readme, /NASA FIRMS/);
-  assert.match(readme, /ERA5-Land/);
+  assert.match(readme, /NASA POWER/);
   assert.match(readme, /architecture/i);
 });
 

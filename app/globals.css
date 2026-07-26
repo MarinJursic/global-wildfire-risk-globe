@@ -743,6 +743,55 @@ input:focus-visible,
   background: var(--cyan);
 }
 
+.quantitative-legend {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.quantitative-legend > span {
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.13em;
+}
+
+.quantitative-legend dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 11px 0 0;
+}
+
+.quantitative-legend dl > div {
+  min-width: 0;
+  padding-left: 8px;
+  border-left: 2px solid var(--line-strong);
+}
+
+.quantitative-legend dt,
+.quantitative-legend small {
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.quantitative-legend dd {
+  margin: 3px 0;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+
+.quantitative-legend small {
+  display: block;
+  line-height: 1.35;
+}
+
+.quantitative-legend p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
 .source-summary {
   display: flex;
   justify-content: space-between;

@@ -7,18 +7,18 @@ const imageUrl = new URL(`${basePath}/og.png`, metadataBase).toString();
 
 export const metadata: Metadata = {
   metadataBase,
-  title: "EMBER / Global Wildfire Intelligence",
+  title: "Ember Atlas — Global Wildfire Intelligence",
   description:
-    "A historic wildfire replay and illustrative risk-forecasting research interface.",
+    "A provenance-forward historic wildfire evidence atlas with clearly separated research scenarios.",
   openGraph: {
-    title: "EMBER / Global Wildfire Intelligence",
+    title: "Ember Atlas — Global Wildfire Intelligence",
     description:
-      "Explore historic wildfire activations with normalized perimeter fixtures and clearly labeled illustrative forecasts.",
-    images: [{ url: imageUrl, width: 1200, height: 630, alt: "EMBER global wildfire intelligence globe" }],
+      "Explore sampled CEMS incident evidence, NASA POWER context, and clearly labeled illustrative forecasts.",
+    images: [{ url: imageUrl, width: 1200, height: 630, alt: "Ember Atlas global wildfire intelligence globe" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "EMBER / Global Wildfire Intelligence",
+    title: "Ember Atlas — Global Wildfire Intelligence",
     description:
       "A scientifically explicit historic wildfire replay and research-forecasting workbench.",
     images: [imageUrl],

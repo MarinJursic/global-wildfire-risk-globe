@@ -36,6 +36,32 @@ export interface SourceManifest {
   note: string;
 }
 
+export interface GeoPoint {
+  latitude: number;
+  longitude: number;
+}
+
+export interface HistoricEvidence {
+  productLabel: string;
+  mappedAtUtc: string;
+  areaHectares: number;
+  perimeterRings: GeoPoint[][];
+  evidencePoints: GeoPoint[];
+  evidencePointLabel: string;
+  fireFronts: GeoPoint[][];
+  fireFrontKm?: number;
+  geometryMethod: string;
+  displayMagnification: number;
+  weather: {
+    dateUtc: string;
+    temperatureC: number;
+    windSpeedMps: number;
+    windFromDegrees: number;
+    surfaceSoilWetness: number;
+    sourceLabel: string;
+  };
+}
+
 export interface HistoricIncident {
   id: string;
   name: string;
@@ -48,6 +74,7 @@ export interface HistoricIncident {
   status: "historic-replay";
   summary: string;
   sourceIds: string[];
+  evidence: HistoricEvidence;
   frames: StoryFrame[];
   assetFixture: {
     label: string;

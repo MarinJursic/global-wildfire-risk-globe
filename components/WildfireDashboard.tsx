@@ -14,7 +14,6 @@ import {
   sourcesForIncident,
 } from "@/lib/incidents";
 import {
-  exposureFor,
   HORIZON_COPY,
   LAYER_LABELS,
   riskIntervalFor,
@@ -54,11 +53,11 @@ export function WildfireDashboard() {
     wind: true,
     temperature: false,
     moisture: false,
-    dryness: true,
+    dryness: false,
     detections: true,
-    uncertainty: true,
-    scars: false,
-    infrastructure: true,
+    uncertainty: false,
+    scars: true,
+    infrastructure: false,
   });
 
   const incident =
@@ -67,7 +66,6 @@ export function WildfireDashboard() {
   const frames = incident.frames;
   const frame = frames[Math.min(frameIndex, frames.length - 1)];
   const risk = riskIntervalFor(frame, horizon);
-  const exposure = exposureFor(frame);
   const incidentSources = sourcesForIncident(incident);
 
   useEffect(() => {
@@ -183,8 +181,8 @@ export function WildfireDashboard() {
         <div className="replay-truth">
           <i />
           <div>
-            <strong>HISTORIC REPLAY</strong>
-            <span>Cached research artifacts · never live</span>
+            <strong>CLOSED HISTORIC CASE</strong>
+            <span>Archived evidence · never live</span>
           </div>
         </div>
 
@@ -228,20 +226,19 @@ export function WildfireDashboard() {
           role="region"
           aria-label="Replay methodology"
         >
-          <span className="dialog-kicker">RESEARCH DEMONSTRATION</span>
+          <span className="dialog-kicker">ARCHIVE + RESEARCH SCENARIO</span>
           <h2>Observed evidence and model output remain separate.</h2>
           <p>
             This product is not connected to live alert feeds. Historic locations,
-            activation identifiers, and cited product summaries are sourced from
-            public agencies. Compact perimeters, detections, weather fields, and
-            forecast values are deterministic research fixtures—not operational
-            fire intelligence.
+            activation identifiers, sampled perimeter shapes, mapped-evidence
+            points, and incident-day meteorology are derived from the exact CEMS
+            and NASA products listed in Sources.
           </p>
           <p>
-            Solid amber marks a normalized perimeter fixture. Dashed red and cyan
-            represent an illustrative forecast and uncertainty envelope. The
-            ignition panel uses a repeated 24-hour hazard fixture—not a calibrated
-            alert probability or certainty of ignition.
+            Solid amber preserves a sampled CEMS perimeter shape, magnified
+            cartographically for legibility. Dashed red and cyan are a separate,
+            illustrative forecast scenario. Temperature, wetness, and dryness
+            context are normalized visual encodings—not raw spatial grids.
           </p>
           <button type="button" onClick={() => setShowInfo(false)}>
             Close
@@ -274,8 +271,8 @@ export function WildfireDashboard() {
             </button>
           </header>
           <p>
-            Every displayed layer is bundled. Opening this page does not request a
-            live fire service.
+            Every displayed layer is bundled and deterministic. Opening this page
+            does not request a live fire or weather service.
           </p>
           {incidentSources.map((source) => (
             <article key={source.id}>
@@ -334,7 +331,7 @@ export function WildfireDashboard() {
 
       <section className="atlas-stage" aria-label="Planetary incident map">
         <div className="stage-caption">
-          <span>{incident.activationCode} · AUTO-FOCUS</span>
+          <span>{incident.activationCode} · CLOSED ARCHIVE · NOT LIVE</span>
           <h1>{incident.name}</h1>
           <p>
             {incident.region}, {incident.country}
@@ -377,7 +374,7 @@ export function WildfireDashboard() {
 
         <div className="map-key">
           <span>
-            <i className="observed" /> Normalized perimeter fixture
+            <i className="observed" /> Sampled CEMS burn perimeter
           </span>
           <span>
             <i className="forecast" /> Illustrative forecast p50
@@ -409,19 +406,45 @@ export function WildfireDashboard() {
         {showInspector && (
           <div className="inspector-content" id="incident-inspector-content">
             <header>
-              <span>ACTIVE FRONT · T+{frame.hour}H</span>
-              <strong>{frame.label} UTC</strong>
+              <span>HISTORIC EVIDENCE · CLOSED CASE</span>
+              <strong>{incident.evidence.mappedAtUtc}</strong>
             </header>
             <div className="observed-stat">
-              <span>Normalized perimeter fixture area</span>
-              <strong>{formatArea(frame.areaHectares)}</strong>
-              <small>hectares · authored replay fixture</small>
+              <span>{incident.evidence.productLabel}</span>
+              <strong>{formatArea(incident.evidence.areaHectares)}</strong>
+              <small>mapped hectares · CEMS vector product</small>
             </div>
+
+            <section className="layer-matrix">
+              <span>VISIBLE LAYERS</span>
+              <div>
+                {LAYERS.map((layer) => (
+                  <button
+                    type="button"
+                    key={layer}
+                    className={layers[layer] ? "enabled" : ""}
+                    aria-label={`${LAYER_LABELS[layer]} ${
+                      layers[layer] ? "on" : "off"
+                    }`}
+                    aria-pressed={layers[layer]}
+                    onClick={() =>
+                      setLayers((current) => ({
+                        ...current,
+                        [layer]: !current[layer],
+                      }))
+                    }
+                  >
+                    <i />
+                    <span>{LAYER_LABELS[layer]}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
 
             <section className="risk-module">
               <div>
-                <span>Ignition risk</span>
-                <small>Illustrative risk interval</small>
+                <span>Research scenario</span>
+                <small>Illustrative · not an incident forecast</small>
               </div>
               <div className="horizon-tabs" role="tablist" aria-label="Forecast horizon">
                 {HORIZONS.map((item) => (
@@ -478,53 +501,70 @@ export function WildfireDashboard() {
 
             <dl className="incident-metrics">
               <div>
-                <dt>Perimeter fixture</dt>
-                <dd>{frame.frontKm.toFixed(1)} km</dd>
+                <dt>Mapped evidence</dt>
+                <dd>{incident.evidence.evidencePoints.length} points</dd>
               </div>
               <div>
-                <dt>Detection sample fixture</dt>
-                <dd>{frame.observationCount}</dd>
+                <dt>Display magnification</dt>
+                <dd>{incident.evidence.displayMagnification}×</dd>
               </div>
               <div>
-                <dt>Wind fixture</dt>
+                <dt>NASA 10 m wind</dt>
                 <dd>
-                  {frame.windDirection} · {frame.windKph} km/h
+                  {incident.evidence.weather.windSpeedMps.toFixed(2)} m/s · from{" "}
+                  {incident.evidence.weather.windFromDegrees.toFixed(1)}°
                 </dd>
               </div>
               <div>
-                <dt>Road exposure fixture</dt>
-                <dd>{exposure.roadsKm.toFixed(1)} km</dd>
+                <dt>Mapped fire front</dt>
+                <dd>
+                  {incident.evidence.fireFrontKm
+                    ? `${incident.evidence.fireFrontKm.toFixed(1)} km`
+                    : "Not in product"}
+                </dd>
               </div>
             </dl>
             <p className="metric-caveat">
-              Perimeter, detection, and exposure values are deterministic
-              area/progress fixtures—not mapped operational assets.
+              {incident.evidence.evidencePointLabel}. Shape is preserved but
+              magnified for globe legibility. {incident.evidence.geometryMethod}
             </p>
 
-            <section className="layer-matrix">
-              <span>VISIBLE LAYERS</span>
-              <div>
-                {LAYERS.map((layer) => (
-                  <button
-                    type="button"
-                    key={layer}
-                    className={layers[layer] ? "enabled" : ""}
-                    aria-label={`${LAYER_LABELS[layer]} ${
-                      layers[layer] ? "on" : "off"
-                    }`}
-                    aria-pressed={layers[layer]}
-                    onClick={() =>
-                      setLayers((current) => ({
-                        ...current,
-                        [layer]: !current[layer],
-                      }))
-                    }
-                  >
-                    <i />
-                    <span>{LAYER_LABELS[layer]}</span>
-                  </button>
-                ))}
-              </div>
+            <section className="quantitative-legend" aria-label="Layer units and scales">
+              <span>LAYER UNITS · HISTORIC-DAY POINT</span>
+              <dl>
+                <div>
+                  <dt>Temperature</dt>
+                  <dd>{incident.evidence.weather.temperatureC.toFixed(2)} °C</dd>
+                  <small>orange context · 0–45 °C</small>
+                </div>
+                <div>
+                  <dt>Soil wetness</dt>
+                  <dd>{incident.evidence.weather.surfaceSoilWetness.toFixed(2)}</dd>
+                  <small>cyan context · 0–1 fraction</small>
+                </div>
+                <div>
+                  <dt>Dryness</dt>
+                  <dd>
+                    {(1 - incident.evidence.weather.surfaceSoilWetness).toFixed(2)}
+                  </dd>
+                  <small>amber · 1 − wetness, 0–1</small>
+                </div>
+                <div>
+                  <dt>Wind</dt>
+                  <dd>
+                    {incident.evidence.weather.windSpeedMps.toFixed(2)} m/s
+                  </dd>
+                  <small>
+                    from {incident.evidence.weather.windFromDegrees.toFixed(1)}°;
+                    arrows point downwind
+                  </small>
+                </div>
+              </dl>
+              <p>
+                {incident.evidence.weather.sourceLabel} ·{" "}
+                {incident.evidence.weather.dateUtc}. Context dots are normalized
+                encodings, not gridded measurements.
+              </p>
             </section>
 
             <button
@@ -558,9 +598,9 @@ export function WildfireDashboard() {
         </button>
         <div className="filmstrip-main">
           <div className="filmstrip-heading">
-            <span>OBSERVATION SEQUENCE</span>
+            <span>ILLUSTRATIVE MODEL SEQUENCE</span>
             <strong>{frame.label} UTC</strong>
-            <span>HISTORIC / NON-OPERATIONAL</span>
+            <span>SCENARIO / NON-OPERATIONAL</span>
           </div>
           <input
             type="range"

@@ -1,5 +1,5 @@
 {
-  "name": "global-wildfire-risk-globe",
+  "name": "emberatlas",
   "version": "0.1.0",
   "description": "Interactive Three.js historic wildfire atlas with explicit deterministic risk, spread, uncertainty, and exposure fixtures.",
   "private": true,

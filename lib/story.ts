@@ -13,14 +13,14 @@ export const HORIZON_COPY: Record<Horizon, string> = {
 };
 
 export const LAYER_LABELS = {
-  wind: "Wind field",
-  temperature: "Temperature",
-  moisture: "Soil moisture",
-  dryness: "Vegetation dryness",
-  detections: "Detection sample fixture",
-  uncertainty: "Forecast envelope",
-  scars: "Historical fire scars",
-  infrastructure: "Assets at risk",
+  wind: "Historic-day wind",
+  temperature: "Temperature context",
+  moisture: "Soil wetness context",
+  dryness: "Derived dryness context",
+  detections: "CEMS mapped evidence",
+  uncertainty: "Scenario envelope",
+  scars: "CEMS mapped burn area",
+  infrastructure: "Synthetic exposure test",
 } as const;
 
 const HORIZON_HOURS: Record<Horizon, number> = {
