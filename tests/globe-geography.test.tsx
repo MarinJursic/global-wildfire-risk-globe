@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { countrySegments, toVector } from "../components/GlobeScene";
+import {
+  countrySegments,
+  earthTextureUrl,
+  FULL_EARTH_CAMERA_DISTANCE,
+  INCIDENT_CAMERA_DISTANCE,
+  toVector,
+} from "../components/GlobeScene";
 
 describe("globe geography", () => {
   it("maps cardinal WGS84 coordinates to the expected sphere axes", () => {
@@ -37,5 +43,17 @@ describe("globe geography", () => {
     expect(evros.y).toBeGreaterThan(0);
     expect(evros.z).toBeLessThan(0);
     expect(evros.length()).toBeCloseTo(1.78, 8);
+  });
+
+  it("keeps both default and focused views far enough away to show the full Earth", () => {
+    expect(INCIDENT_CAMERA_DISTANCE).toBeGreaterThanOrEqual(7.5);
+    expect(FULL_EARTH_CAMERA_DISTANCE).toBeGreaterThan(INCIDENT_CAMERA_DISTANCE);
+  });
+
+  it("resolves the bundled Earth texture under local and Pages base paths", () => {
+    expect(earthTextureUrl("")).toBe("/textures/blue-marble-4k.jpg");
+    expect(earthTextureUrl("/global-wildfire-risk-globe")).toBe(
+      "/global-wildfire-risk-globe/textures/blue-marble-4k.jpg",
+    );
   });
 });

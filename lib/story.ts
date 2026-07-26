@@ -17,7 +17,7 @@ export const LAYER_LABELS = {
   temperature: "Temperature",
   moisture: "Soil moisture",
   dryness: "Vegetation dryness",
-  detections: "VIIRS detections",
+  detections: "Detection sample fixture",
   uncertainty: "Forecast envelope",
   scars: "Historical fire scars",
   infrastructure: "Assets at risk",

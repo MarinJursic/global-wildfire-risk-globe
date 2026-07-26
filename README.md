@@ -9,9 +9,9 @@ primary workspace. It combines three complementary tasks:
 
 1. **Historic incident replay** locates documented Copernicus Emergency Management
    Service activations in Greece, Chile, and Western Australia.
-2. **Ignition-risk forecasting** estimates the calibrated probability of a *new
-   detectable fire* in a geographic cell over 6-hour, 24-hour, 48-hour, 72-hour,
-   and 7-day horizons.
+2. **Ignition-risk exploration** displays an illustrative interval for a *new
+   detectable fire* over 6-hour, 24-hour, 48-hour, 72-hour, and 7-day horizons.
+   It is a deterministic interface fixture, not a calibrated alert probability.
 3. **Active-fire spread forecasting** begins after a detection and estimates spread
    direction, arrival-time distribution, affected area, uncertainty, and exposure.
 
@@ -39,24 +39,23 @@ atlas works without credentials, runtime tile services, or hidden downloads.
   is unavailable.
 - Select Greece, Chile, or Australia from the incident index. Projected labels track
   their latitude/longitude and disappear when they move behind the globe.
-- Scrub the bottom observation filmstrip. Solid amber is the cached observation
-  contract; dashed red is an illustrative p50 forecast; cyan is its illustrative
+- Scrub the bottom observation filmstrip. Solid amber is the normalized perimeter
+  fixture; dashed red is an illustrative p50 forecast; cyan is its illustrative
   uncertainty envelope.
 - Open the provenance ledger at any time. It explicitly identifies the app as a
   historic, cached, non-live replay.
 
 ## Continuous app walkthrough
 
-[![Continuous EMBER application walkthrough showing the Evros wildfire globe, forecast controls, theme change, and methodology panel](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
+[![Continuous EMBER application walkthrough showing the Evros wildfire globe, forecast controls, theme change, and source ledger](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
 
 [Watch or download the full-resolution MP4](docs/walkthrough/app-walkthrough.mp4)
 · [Open the walkthrough poster](docs/walkthrough/app-walkthrough-poster.jpg)
 
-This is one uninterrupted recording of the executable atlas. It moves from the
-Evros focus to Full Earth, rotates across longitudes and a pole, refocuses on
-Valparaíso and Wooroloo, toggles temperature and historic-scar evidence, plays the
-observation story, switches to the daylight theme, and opens the methodology
-disclosure. Every state transition is rendered by the running application.
+This is one uninterrupted recording of the executable atlas. It opens on the full
+NASA-textured Earth at Evros, plays the historic observation sequence, refocuses on
+Valparaíso, switches theme, and opens the accessible source ledger.
+Every state transition is rendered by the running application.
 
 ## What you can do
 
@@ -65,11 +64,13 @@ disclosure. Every state transition is rendered by the running application.
 - Switch between a high-contrast dark control-room theme and a readable daylight
   theme; the choice persists in local storage and defaults to the operating-system
   preference on first use.
-- Change the ignition-risk horizon and watch cumulative probability update across
-  6-hour, 24-hour, 48-hour, 72-hour, and 7-day windows.
+- Change the ignition-risk horizon and watch the illustrative interval update across
+  6-hour, 24-hour, 48-hour, 72-hour, and 7-day windows under a repeated 24-hour
+  hazard assumption.
 - Toggle eight independent renderer layers: moving wind vectors; temperature,
-  soil-moisture, and vegetation-dryness scalar-field samples; VIIRS-shaped
-  detections; forecast uncertainty; time-scaled historical scars; and the active
+  soil-moisture, and vegetation-dryness scalar-field samples; detection-sample
+  fixtures shaped after the VIIRS interface contract; forecast uncertainty;
+  time-scaled historical scars; and the active
   incident's synthetic asset-at-risk corridor and sites.
 - Play or scrub each six-step observation sequence.
 - Compare the p50 forecast outline with the observation outline while affected area,
@@ -88,12 +89,18 @@ disclosure. Every state transition is rendered by the running application.
 - Every layer control exposes an `aria-pressed` state, every icon-only control has an
   accessible name, keyboard focus is visible, and verification metrics remain
   available in the mobile layout.
+- The provenance ledger behaves as a modal dialog: focus moves into it, remains
+  contained while open, closes with Escape, and returns to the invoking control.
 - Reduced-motion preference removes inertial and focus interpolation.
 - If WebGL is unavailable, the app reports that condition while leaving all textual
   forecasts, controls, and metrics usable.
 
 ### Geographic and visual correctness
 
+- The globe surface uses a locally bundled 4096 × 2048 derivative of NASA’s
+  **Blue Marble: Next Generation** imagery, with anisotropic filtering and mipmaps
+  for stable detail during orbit and zoom. Full attribution is recorded in
+  [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 - Country/coastline geometry comes from **Natural Earth 1:110m Admin-0 countries
   v4.1.0**, converted through `world-atlas@2`; the renderer no longer invents
   procedural continent shapes.
@@ -105,8 +112,9 @@ disclosure. Every state transition is rendered by the running application.
   road, utility, or facility inventory.
 - Grid parallels are true spherical latitude circles. Meridians share the globe
   radius and rotation center.
-- ACES filmic tone mapping and separate ambient, key, and rim lights preserve surface
-  form without making the synthetic overlays appear photographic.
+- ACES filmic tone mapping, a low-opacity ocean sheen, a restrained atmospheric
+  limb, and separate ambient, key, and rim lights preserve Earth’s surface form
+  while keeping the synthetic forecast overlays visually distinct.
 - Natural Earth’s default country theme is a **de facto boundary viewpoint**. It is
   appropriate for a small global overview, not cadastral work or a legal statement
   about disputed boundaries.
@@ -354,11 +362,13 @@ vulnerabilities for the locked dependency graph.
 
 The service combines normalized dryness, 10 m wind, inverse soil moisture, and a
 small stable location perturbation. A logistic transform maps the latent score to a
-24-hour probability. The other horizons use the cumulative-event transform
+24-hour fixture value. The other horizons use the cumulative-event transform
 `1 - (1 - p24)^(hours/24)`, so a fixed set of conditions is strictly monotonic across
-the five horizons. The interval width grows modestly with the point estimate. The
-displayed Brier score and expected calibration error are fixed demonstration metadata,
-not results from a new empirical benchmark.
+the five horizons. This transform assumes the same independent 24-hour hazard repeats
+through the selected window; it is not a learned temporal forecast. The interval width
+grows modestly with the point estimate. The displayed Brier score and expected
+calibration error are fixed demonstration metadata, not results from a new empirical
+benchmark.
 
 A serious model comparison would include:
 
@@ -411,8 +421,11 @@ incident-command integration, and clear liability boundaries.
 - No topography, fuel map, suppression action, spotting, fire-atmosphere coupling,
   or cloud/smoke detection model is present.
 - A directional ellipse cannot represent complex terrain-driven fronts.
-- The “95% calibrated interval” describes the intended interface contract; this demo
-  does not contain a fitted calibration dataset.
+- The displayed risk interval is illustrative. This demo does not contain a fitted
+  calibration dataset, and the horizon transform assumes a repeated independent
+  24-hour hazard.
+- Perimeter, detection, and asset-exposure values are deterministic area/progress
+  fixtures rather than measurements against mapped operational assets.
 - IoU and arrival-time error follow deterministic replay curves; they are not a
   published evaluation result.
 - The web app does not poll live sources and remains intentionally safe to demo offline.
@@ -430,6 +443,9 @@ Primary and official references used to shape the product:
 - [Natural Earth disputed-boundaries policy](https://www.naturalearthdata.com/about/disputed-boundaries-policy/) —
   explains the default worldview and the availability of alternate point-of-view
   datasets.
+- [NASA Blue Marble: Next Generation](https://svs.gsfc.nasa.gov/3615/) —
+  the credited global surface image bundled as a 4K derivative for a realistic,
+  offline-capable Earth texture.
 - [NASA FIRMS overview](https://wiki.earthdata.nasa.gov/spaces/FIRMS/pages/32079892/Fire%2BInformation%2Bfor%2BResource%2BManagement%2BSystem%2BFIRMS) —
   global MODIS and VIIRS active-fire locations; near-real-time detections use the
   VIIRS 375 m Fire and Thermal Anomalies algorithms.
@@ -448,6 +464,8 @@ Primary and official references used to shape the product:
 
 ## License
 
-This demonstration code is provided for portfolio and educational use. Third-party
-datasets are **not redistributed** in this repository; consult each official source
-for its current license, attribution, and acceptable-use requirements.
+This demonstration code is provided for portfolio and educational use. The repository
+bundles a credited NASA Blue Marble derivative and the Natural Earth geometry described
+in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Operational fire, weather, and
+emergency-management datasets are not redistributed; consult each official source for
+its current license, attribution, and acceptable-use requirements.

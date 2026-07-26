@@ -88,6 +88,12 @@ input:focus-visible,
     var(--bg);
 }
 
+@media (min-width: 1101px) {
+  .atlas-shell.inspector-closed {
+    grid-template-columns: 224px minmax(540px, 1fr) 0;
+  }
+}
+
 .atlas-rail {
   grid-area: rail;
   z-index: 20;
@@ -326,6 +332,12 @@ input:focus-visible,
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 24%, rgba(113, 161, 191, 0.1) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 72% 16%, rgba(255, 255, 255, 0.13) 0 1px, transparent 1.4px),
+    radial-gradient(circle at 82% 73%, rgba(154, 191, 220, 0.1) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 50% 48%, #0d1a27 0, #050a11 46%, #010307 100%);
+  background-size: 151px 151px, 233px 233px, 311px 311px, auto;
 }
 
 .globe-viewport,
@@ -344,6 +356,8 @@ input:focus-visible,
 
 .globe-canvas canvas {
   display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .globe-fallback {
@@ -404,6 +418,13 @@ input:focus-visible,
   top: 22px;
   left: 24px;
   pointer-events: none;
+  color: #f4f8fb;
+}
+
+.stage-caption span,
+.stage-caption p,
+.orbit-help {
+  color: #aebdca;
 }
 
 .stage-caption h1 {
@@ -628,6 +649,15 @@ input:focus-visible,
   margin: 7px 0 0;
   color: var(--muted);
   font-size: 10px;
+  line-height: 1.45;
+}
+
+.metric-caveat {
+  margin: 0;
+  padding: 10px 16px 13px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 9px;
   line-height: 1.45;
 }
 
@@ -1146,11 +1176,29 @@ input:focus-visible,
 
   .forecast-filmstrip {
     grid-template-columns: 50px 1fr;
-    min-height: 138px;
+    min-height: 0;
   }
 
   .forecast-verification {
-    display: none;
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: auto auto minmax(0, 1fr);
+    align-items: baseline;
+    justify-content: initial;
+    gap: 9px;
+    padding: 9px 12px;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .forecast-verification strong {
+    font-size: 13px;
+  }
+
+  .forecast-verification small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .filmstrip-main {

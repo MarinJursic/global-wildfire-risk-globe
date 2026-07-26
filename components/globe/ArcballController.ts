@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 export const MIN_CAMERA_DISTANCE = 3.15;
-export const MAX_CAMERA_DISTANCE = 7.2;
+export const MAX_CAMERA_DISTANCE = 10.2;
 
 export function clampCameraDistance(distance: number) {
   return THREE.MathUtils.clamp(distance, MIN_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE);

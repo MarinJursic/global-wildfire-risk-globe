@@ -33,7 +33,7 @@ test("server-renders the wildfire research product shell", async () => {
   assert.match(html, /Global wildfire intelligence/);
   assert.match(html, /Ignition risk/);
   assert.match(html, /Alexandroupolis/);
-  assert.match(html, /Forecast \/ observation/i);
+  assert.match(html, /Replay fixture comparison/i);
   assert.match(html, /<title>EMBER \/ Global Wildfire Intelligence<\/title>/i);
   assert.doesNotMatch(html, /starter-preview|Your site is taking shape/);
 });
@@ -56,8 +56,10 @@ test("removes disposable starter assets and includes scientific contracts", asyn
   assert.match(story, /riskLow/);
   assert.match(story, /arrivalErrorMinutes/);
   assert.match(contracts, /probability/);
-  assert.match(dashboard, /Illustrative 95% calibration contract/);
-  assert.match(dashboard, /not certainty of ignition/i);
+  assert.match(dashboard, /Illustrative risk interval/);
+  assert.match(dashboard, /repeated 24-hour hazard fixture/i);
+  assert.match(dashboard, /not a calibrated alert probability/i);
+  assert.match(dashboard, /not mapped operational assets/i);
   for (const layer of ["temperature", "moisture", "scars", "infrastructure"]) {
     assert.match(dashboard, new RegExp(layer, "i"));
   }

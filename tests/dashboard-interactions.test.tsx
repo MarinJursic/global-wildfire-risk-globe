@@ -46,6 +46,12 @@ describe("wildfire dashboard controls", () => {
 
     const next = screen.getByRole("tab", { name: "48h" });
     expect(next.getAttribute("aria-selected")).toBe("true");
+    expect(next.getAttribute("tabindex")).toBe("0");
+    expect(current.getAttribute("tabindex")).toBe("-1");
+    expect(next.getAttribute("aria-controls")).toBe("risk-horizon-panel");
+    expect(screen.getByRole("tabpanel").getAttribute("aria-labelledby")).toBe(
+      "horizon-tab-48h",
+    );
     expect(document.activeElement).toBe(next);
   });
 
@@ -56,7 +62,7 @@ describe("wildfire dashboard controls", () => {
       "Temperature",
       "Soil moisture",
       "Vegetation dryness",
-      "VIIRS detections",
+      "Detection sample fixture",
       "Forecast envelope",
       "Historical fire scars",
       "Assets at risk",
@@ -111,9 +117,32 @@ describe("wildfire dashboard controls", () => {
     expect(screen.getByText(/Viña del Mar, Chile/i)).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Sources" }));
-    expect(screen.getByRole("complementary", { name: "Data provenance" })).toBeTruthy();
+    expect(
+      screen.getByRole("dialog", {
+        name: "Data provenance for EMSR715",
+      }),
+    ).toBeTruthy();
     expect(screen.getAllByText("EMSR715").length).toBeGreaterThan(0);
     expect(screen.getByText(/does not request a live fire service/i)).toBeTruthy();
+  });
+
+  it("manages focus and Escape for the provenance dialog", () => {
+    render(<WildfireDashboard />);
+    const trigger = screen.getByRole("button", { name: "Sources" });
+    trigger.focus();
+    fireEvent.click(trigger);
+
+    const close = screen.getByRole("button", {
+      name: "Close data provenance",
+    });
+    expect(document.activeElement).toBe(close);
+
+    fireEvent.keyDown(window, { key: "Tab", shiftKey: true });
+    expect(document.activeElement).toBe(screen.getAllByRole("link").at(-1));
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(document.activeElement).toBe(trigger);
   });
 
   it("provides non-drag globe controls", () => {
@@ -124,5 +153,18 @@ describe("wildfire dashboard controls", () => {
       expect(control).toBeTruthy();
       fireEvent.click(control);
     }
+  });
+
+  it("reclaims the inspector layout state without removing verification metrics", () => {
+    const { container } = render(<WildfireDashboard />);
+    const shell = container.querySelector(".atlas-shell");
+    expect(shell?.classList.contains("inspector-open")).toBe(true);
+    expect(screen.getByText(/0\.69 IoU/i)).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close incident inspector" }),
+    );
+    expect(shell?.classList.contains("inspector-closed")).toBe(true);
+    expect(screen.getByText(/0\.69 IoU/i)).toBeTruthy();
   });
 });

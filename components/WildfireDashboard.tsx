@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   GlobeAction,
   GlobeCommand,
@@ -35,6 +35,9 @@ function formatArea(area: number) {
 }
 
 export function WildfireDashboard() {
+  const sourceDialogRef = useRef<HTMLElement>(null);
+  const sourceCloseRef = useRef<HTMLButtonElement>(null);
+  const sourcePreviousFocusRef = useRef<HTMLElement | null>(null);
   const [theme, setTheme] = useState<Theme>("dark");
   const [incidentId, setIncidentId] = useState(HISTORIC_INCIDENTS[0].id);
   const [horizon, setHorizon] = useState<Horizon>("24h");
@@ -102,8 +105,52 @@ export function WildfireDashboard() {
     return () => window.clearInterval(timer);
   }, [frames.length, playing]);
 
+  useEffect(() => {
+    if (!showSources) return;
+    sourceCloseRef.current?.focus();
+
+    const handleSourceDialogKeys = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setShowSources(false);
+        return;
+      }
+      if (event.key !== "Tab" || !sourceDialogRef.current) return;
+
+      const focusable = Array.from(
+        sourceDialogRef.current.querySelectorAll<HTMLElement>(
+          "button:not([disabled]), a[href], [tabindex]:not([tabindex='-1'])",
+        ),
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable.at(-1)!;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleSourceDialogKeys);
+    return () => {
+      window.removeEventListener("keydown", handleSourceDialogKeys);
+      sourcePreviousFocusRef.current?.focus();
+    };
+  }, [showSources]);
+
   const sendGlobeCommand = (action: GlobeAction) =>
     setCommand((current) => ({ id: current.id + 1, action }));
+
+  const openSources = () => {
+    sourcePreviousFocusRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    setShowSources(true);
+  };
 
   const chooseIncident = (nextId: string) => {
     setIncidentId(nextId);
@@ -116,7 +163,12 @@ export function WildfireDashboard() {
   const timelineProgress = `${(frameIndex / (frames.length - 1)) * 100}%`;
 
   return (
-    <main className="app-shell atlas-shell" data-theme={theme}>
+    <main
+      className={`app-shell atlas-shell ${
+        showInspector ? "inspector-open" : "inspector-closed"
+      }`}
+      data-theme={theme}
+    >
       <header className="atlas-rail">
         <div className="atlas-brand">
           <span className="atlas-mark" aria-hidden="true">
@@ -139,8 +191,10 @@ export function WildfireDashboard() {
         <nav className="rail-actions" aria-label="Application controls">
           <button
             type="button"
-            onClick={() => setShowSources((current) => !current)}
+            aria-controls="source-drawer"
             aria-expanded={showSources}
+            aria-haspopup="dialog"
+            onClick={() => (showSources ? setShowSources(false) : openSources())}
           >
             Sources
           </button>
@@ -184,9 +238,10 @@ export function WildfireDashboard() {
             fire intelligence.
           </p>
           <p>
-            Solid amber marks the cached observation contract. Dashed red and cyan
+            Solid amber marks a normalized perimeter fixture. Dashed red and cyan
             represent an illustrative forecast and uncertainty envelope. The
-            ignition panel describes probability, not certainty of ignition.
+            ignition panel uses a repeated 24-hour hazard fixture—not a calibrated
+            alert probability or certainty of ignition.
           </p>
           <button type="button" onClick={() => setShowInfo(false)}>
             Close
@@ -195,13 +250,22 @@ export function WildfireDashboard() {
       )}
 
       {showSources && (
-        <aside className="source-drawer" aria-label="Data provenance">
+        <aside
+          className="source-drawer"
+          id="source-drawer"
+          ref={sourceDialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Data provenance for ${incident.activationCode}`}
+          tabIndex={-1}
+        >
           <header>
             <div>
               <span>PROVENANCE LEDGER</span>
               <h2>{incident.activationCode}</h2>
             </div>
             <button
+              ref={sourceCloseRef}
               type="button"
               aria-label="Close data provenance"
               onClick={() => setShowSources(false)}
@@ -210,8 +274,8 @@ export function WildfireDashboard() {
             </button>
           </header>
           <p>
-            Every layer is cached. Opening this page does not request a live fire
-            service.
+            Every displayed layer is bundled. Opening this page does not request a
+            live fire service.
           </p>
           {incidentSources.map((source) => (
             <article key={source.id}>
@@ -313,13 +377,13 @@ export function WildfireDashboard() {
 
         <div className="map-key">
           <span>
-            <i className="observed" /> Cached observation
+            <i className="observed" /> Normalized perimeter fixture
           </span>
           <span>
             <i className="forecast" /> Illustrative forecast p50
           </span>
           <span>
-            <i className="uncertainty" /> Illustrative 90% envelope
+            <i className="uncertainty" /> Illustrative uncertainty envelope
           </span>
         </div>
 
@@ -337,26 +401,27 @@ export function WildfireDashboard() {
           type="button"
           aria-label={`${showInspector ? "Close" : "Open"} incident inspector`}
           aria-expanded={showInspector}
+          aria-controls="incident-inspector-content"
           onClick={() => setShowInspector((current) => !current)}
         >
           {showInspector ? "→" : "←"}
         </button>
         {showInspector && (
-          <div className="inspector-content">
+          <div className="inspector-content" id="incident-inspector-content">
             <header>
               <span>ACTIVE FRONT · T+{frame.hour}H</span>
               <strong>{frame.label} UTC</strong>
             </header>
             <div className="observed-stat">
-              <span>Observed replay area</span>
+              <span>Normalized perimeter fixture area</span>
               <strong>{formatArea(frame.areaHectares)}</strong>
-              <small>hectares · normalized fixture</small>
+              <small>hectares · authored replay fixture</small>
             </div>
 
             <section className="risk-module">
               <div>
                 <span>Ignition risk</span>
-                <small>Illustrative 95% calibration contract</small>
+                <small>Illustrative risk interval</small>
               </div>
               <div className="horizon-tabs" role="tablist" aria-label="Forecast horizon">
                 {HORIZONS.map((item) => (
@@ -364,8 +429,10 @@ export function WildfireDashboard() {
                     type="button"
                     role="tab"
                     aria-selected={horizon === item}
+                    aria-controls="risk-horizon-panel"
                     className={horizon === item ? "active" : ""}
                     key={item}
+                    tabIndex={horizon === item ? 0 : -1}
                     onClick={() => setHorizon(item)}
                     onKeyDown={(event) => {
                       if (
@@ -381,32 +448,41 @@ export function WildfireDashboard() {
                           HORIZONS.length) %
                         HORIZONS.length;
                       setHorizon(HORIZONS[next]);
-                      document.getElementById(`horizon-${HORIZONS[next]}`)?.focus();
+                      document
+                        .getElementById(`horizon-tab-${HORIZONS[next]}`)
+                        ?.focus();
                     }}
-                    id={`horizon-${item}`}
+                    id={`horizon-tab-${item}`}
                   >
                     {item}
                   </button>
                 ))}
               </div>
-              <div className="risk-range" aria-live="polite">
-                <strong>{Math.round(risk.lower * 100)}</strong>
-                <span>—</span>
-                <strong>{Math.round(risk.upper * 100)}%</strong>
+              <div
+                className="risk-output"
+                id="risk-horizon-panel"
+                role="tabpanel"
+                aria-labelledby={`horizon-tab-${horizon}`}
+              >
+                <div className="risk-range" aria-live="polite">
+                  <strong>{Math.round(risk.lower * 100)}</strong>
+                  <span>—</span>
+                  <strong>{Math.round(risk.upper * 100)}%</strong>
+                </div>
+                <p>
+                  {HORIZON_COPY[horizon]} horizon · repeated 24-hour hazard
+                  fixture, not a calibrated alert probability.
+                </p>
               </div>
-              <p>
-                {HORIZON_COPY[horizon]} horizon · probability of a detectable
-                new fire, not certainty of ignition.
-              </p>
             </section>
 
             <dl className="incident-metrics">
               <div>
-                <dt>Perimeter proxy</dt>
+                <dt>Perimeter fixture</dt>
                 <dd>{frame.frontKm.toFixed(1)} km</dd>
               </div>
               <div>
-                <dt>Detection sample</dt>
+                <dt>Detection sample fixture</dt>
                 <dd>{frame.observationCount}</dd>
               </div>
               <div>
@@ -416,10 +492,14 @@ export function WildfireDashboard() {
                 </dd>
               </div>
               <div>
-                <dt>Exposed roads</dt>
+                <dt>Road exposure fixture</dt>
                 <dd>{exposure.roadsKm.toFixed(1)} km</dd>
               </div>
             </dl>
+            <p className="metric-caveat">
+              Perimeter, detection, and exposure values are deterministic
+              area/progress fixtures—not mapped operational assets.
+            </p>
 
             <section className="layer-matrix">
               <span>VISIBLE LAYERS</span>
@@ -450,7 +530,9 @@ export function WildfireDashboard() {
             <button
               className="source-summary"
               type="button"
-              onClick={() => setShowSources(true)}
+              aria-controls="source-drawer"
+              aria-haspopup="dialog"
+              onClick={openSources}
             >
               <span>
                 <strong>{incident.activationCode}</strong>
@@ -511,9 +593,9 @@ export function WildfireDashboard() {
           </div>
         </div>
         <div className="forecast-verification">
-          <span>FORECAST / OBSERVATION</span>
+          <span>REPLAY FIXTURE COMPARISON</span>
           <strong>{frame.iou.toFixed(2)} IoU</strong>
-          <small>{frame.arrivalErrorMinutes} min benchmark error</small>
+          <small>{frame.arrivalErrorMinutes} min deterministic error curve</small>
         </div>
       </footer>
     </main>

@@ -65,6 +65,9 @@ test("globe uses published geographic boundaries and exposes a persistent theme"
 
   assert.match(globe, /countries-110m\.json/);
   assert.match(globe, /Math\.abs\(lon - previousLon\) > 180/);
+  assert.match(globe, /earthTextureUrl\(basePath\)/);
+  assert.match(globe, /setTextureError\(true\)/);
+  assert.match(globe, /Earth imagery could not be loaded/);
   assert.doesNotMatch(globe, /const continental/);
   assert.match(packageJson, /"world-atlas": "2\.0\.2"/);
   assert.match(dashboard, /ember-theme/);

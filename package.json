@@ -1,7 +1,7 @@
 {
   "name": "global-wildfire-risk-globe",
   "version": "0.1.0",
-  "description": "Interactive Three.js globe and FastAPI service for calibrated wildfire ignition risk, spread forecasting, uncertainty, and exposure analysis.",
+  "description": "Interactive Three.js historic wildfire atlas with explicit deterministic risk, spread, uncertainty, and exposure fixtures.",
   "private": true,
   "engines": {
     "node": ">=22.13.0"

@@ -30,6 +30,13 @@ interface GlobeSceneProps {
   command: GlobeCommand;
 }
 
+export const FULL_EARTH_CAMERA_DISTANCE = 9.2;
+export const INCIDENT_CAMERA_DISTANCE = 7.8;
+
+export function earthTextureUrl(basePath: string) {
+  return `${basePath}/textures/blue-marble-4k.jpg`;
+}
+
 export function toVector(lat: number, lon: number, radius: number) {
   const phi = (90 - lat) * (Math.PI / 180);
   const theta = (lon + 180) * (Math.PI / 180);
@@ -182,6 +189,7 @@ export function GlobeScene({
   const themeRef = useRef(theme);
   const commandRef = useRef(command);
   const [webglError, setWebglError] = useState(false);
+  const [textureError, setTextureError] = useState(false);
 
   useEffect(() => {
     frameRef.current = frame;
@@ -205,7 +213,7 @@ export function GlobeScene({
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
-    camera.position.set(0, 0, 5.4);
+    camera.position.set(0, 0, FULL_EARTH_CAMERA_DISTANCE);
 
     let renderer: THREE.WebGLRenderer;
     try {
@@ -222,7 +230,7 @@ export function GlobeScene({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.06;
+    renderer.toneMappingExposure = 1.12;
     renderer.domElement.setAttribute("aria-hidden", "true");
     renderer.domElement.style.touchAction = "none";
     mount.appendChild(renderer.domElement);
@@ -230,12 +238,32 @@ export function GlobeScene({
     const globe = new THREE.Group();
     scene.add(globe);
 
+    let disposed = false;
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+    const earthTexture = new THREE.TextureLoader().load(
+      earthTextureUrl(basePath),
+      undefined,
+      undefined,
+      () => {
+        if (!disposed) setTextureError(true);
+      },
+    );
+    earthTexture.colorSpace = THREE.SRGBColorSpace;
+    earthTexture.anisotropy = Math.min(
+      16,
+      renderer.capabilities.getMaxAnisotropy(),
+    );
+    earthTexture.minFilter = THREE.LinearMipmapLinearFilter;
+    earthTexture.magFilter = THREE.LinearFilter;
+    earthTexture.generateMipmaps = true;
+
     const sphereMaterial = new THREE.MeshStandardMaterial({
-      color: 0x12382f,
-      emissive: 0x04120f,
-      emissiveIntensity: 0.38,
-      metalness: 0.04,
-      roughness: 0.86,
+      color: 0xffffff,
+      map: earthTexture,
+      emissive: 0x061018,
+      emissiveIntensity: 0.12,
+      metalness: 0,
+      roughness: 0.92,
     });
     const sphere = new THREE.Mesh(
       new THREE.SphereGeometry(1.72, 128, 128),
@@ -246,12 +274,13 @@ export function GlobeScene({
     const oceanSheen = new THREE.Mesh(
       new THREE.SphereGeometry(1.728, 96, 96),
       new THREE.MeshPhysicalMaterial({
-        color: 0x092432,
+        color: 0x5ea8c4,
         transparent: true,
-        opacity: 0.42,
-        roughness: 0.3,
-        clearcoat: 0.5,
+        opacity: 0.055,
+        roughness: 0.22,
+        clearcoat: 0.22,
         side: THREE.FrontSide,
+        depthWrite: false,
       }),
     );
     globe.add(oceanSheen);
@@ -259,7 +288,7 @@ export function GlobeScene({
     const atmosphereMaterial = new THREE.MeshBasicMaterial({
       color: 0x78c9d6,
       transparent: true,
-      opacity: 0.09,
+      opacity: 0.13,
       side: THREE.BackSide,
     });
     const atmosphere = new THREE.Mesh(
@@ -271,7 +300,7 @@ export function GlobeScene({
     const gridMaterial = new THREE.LineBasicMaterial({
       color: 0x85a39b,
       transparent: true,
-      opacity: 0.16,
+      opacity: 0.08,
     });
     for (let latitude = -60; latitude <= 60; latitude += 20) {
       globe.add(lineCircle(1.735, latitude, gridMaterial));
@@ -297,7 +326,7 @@ export function GlobeScene({
     const countryMaterial = new THREE.LineBasicMaterial({
       color: 0xa9c1a3,
       transparent: true,
-      opacity: 0.82,
+      opacity: 0.46,
     });
     const countryLines = new THREE.LineSegments(
       new THREE.BufferGeometry().setFromPoints(countrySegments()),
@@ -505,11 +534,11 @@ export function GlobeScene({
       assetGroups.set(historicIncident.id, assetGroup);
     }
 
-    scene.add(new THREE.HemisphereLight(0xc7e3dc, 0x071614, 1.8));
-    const sun = new THREE.DirectionalLight(0xffefd3, 2.8);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.68));
+    const sun = new THREE.DirectionalLight(0xfff4dc, 2.65);
     sun.position.set(-4, 3, 5);
     scene.add(sun);
-    const rim = new THREE.DirectionalLight(0x5bb0c4, 1.6);
+    const rim = new THREE.DirectionalLight(0x5bb0c4, 0.38);
     rim.position.set(4, -2, -3);
     scene.add(rim);
 
@@ -523,8 +552,8 @@ export function GlobeScene({
     );
     globe.quaternion.copy(targetOrientation);
     let animatingFocus = false;
-    let cameraDistance = 5.4;
-    let targetCameraDistance = 5.4;
+    let cameraDistance = FULL_EARTH_CAMERA_DISTANCE;
+    let targetCameraDistance = FULL_EARTH_CAMERA_DISTANCE;
     let processedCommand = -1;
     const angularVelocity = new THREE.Vector2();
     const pointers = new Map<number, { x: number; y: number }>();
@@ -535,7 +564,7 @@ export function GlobeScene({
         incidentRef.current.latitude,
         incidentRef.current.longitude,
       );
-      targetCameraDistance = 4.65;
+      targetCameraDistance = INCIDENT_CAMERA_DISTANCE;
       animatingFocus = true;
       angularVelocity.set(0, 0);
     };
@@ -611,7 +640,7 @@ export function GlobeScene({
         focusActiveIncident();
       } else if (event.key.toLowerCase() === "r") {
         targetOrientation = new THREE.Quaternion();
-        targetCameraDistance = 5.8;
+        targetCameraDistance = FULL_EARTH_CAMERA_DISTANCE;
         animatingFocus = true;
       } else {
         return;
@@ -630,7 +659,10 @@ export function GlobeScene({
 
     const resize = () => {
       const { clientWidth, clientHeight } = mount;
-      renderer.setSize(clientWidth, clientHeight, false);
+      // Keep the canvas' CSS box in logical pixels while the backing buffer uses
+      // the renderer pixel ratio. Without this, a DPR 2 canvas is laid out at
+      // twice the viewport size and the supposedly centered Earth is cropped.
+      renderer.setSize(clientWidth, clientHeight, true);
       camera.aspect = clientWidth / Math.max(clientHeight, 1);
       camera.updateProjectionMatrix();
     };
@@ -656,7 +688,7 @@ export function GlobeScene({
             focusActiveIncident();
             break;
           case "fit":
-            targetCameraDistance = 5.8;
+            targetCameraDistance = FULL_EARTH_CAMERA_DISTANCE;
             break;
           case "zoom-in":
             targetCameraDistance = clampCameraDistance(
@@ -670,7 +702,7 @@ export function GlobeScene({
             break;
           case "reset":
             targetOrientation = new THREE.Quaternion();
-            targetCameraDistance = 5.8;
+            targetCameraDistance = FULL_EARTH_CAMERA_DISTANCE;
             animatingFocus = true;
             break;
         }
@@ -709,12 +741,12 @@ export function GlobeScene({
       camera.updateMatrixWorld();
 
       const light = themeRef.current === "light";
-      sphereMaterial.color.setHex(light ? 0xb8cab8 : 0x12382f);
-      sphereMaterial.emissive.setHex(light ? 0x273e37 : 0x04120f);
-      oceanSheen.material.color.setHex(light ? 0x75a9b7 : 0x092432);
-      countryMaterial.color.setHex(light ? 0x315845 : 0xa9c1a3);
-      gridMaterial.color.setHex(light ? 0x56736a : 0x85a39b);
-      atmosphereMaterial.color.setHex(light ? 0x438aa1 : 0x78c9d6);
+      sphereMaterial.color.setHex(0xffffff);
+      sphereMaterial.emissive.setHex(light ? 0x111821 : 0x061018);
+      oceanSheen.material.color.setHex(light ? 0x87bad0 : 0x5ea8c4);
+      countryMaterial.color.setHex(light ? 0xd6e8d4 : 0xb8d5b1);
+      gridMaterial.color.setHex(light ? 0xd1dfdc : 0x9db1ac);
+      atmosphereMaterial.color.setHex(light ? 0x72b9dc : 0x78c9e8);
 
       const progress = frameRef.current.hour / 30;
       const layerVisibility = globeLayerState(layersRef.current);
@@ -775,7 +807,7 @@ export function GlobeScene({
       if (layerVisibility.wind && !reducedMotion) {
         windGroup.rotation.y += delta * 0.045;
       }
-      gridMaterial.opacity = 0.16;
+      gridMaterial.opacity = light ? 0.1 : 0.075;
       for (const [id, assetGroup] of assetGroups) {
         assetGroup.visible =
           layerVisibility.infrastructure && id === activeIncident.id;
@@ -815,6 +847,7 @@ export function GlobeScene({
     render();
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(animationId);
       observer.disconnect();
       renderer.domElement.removeEventListener("pointerdown", onPointerDown);
@@ -837,6 +870,7 @@ export function GlobeScene({
           materials.forEach((material) => material.dispose());
         }
       });
+      earthTexture.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };
@@ -855,6 +889,12 @@ export function GlobeScene({
           <p className="globe-fallback" role="status">
             The 3D globe could not start. Incident controls, observations, and
             provenance remain available.
+          </p>
+        )}
+        {!webglError && textureError && (
+          <p className="globe-fallback" role="status">
+            Earth imagery could not be loaded. Incident controls, fixture values,
+            and provenance remain available.
           </p>
         )}
       </div>
