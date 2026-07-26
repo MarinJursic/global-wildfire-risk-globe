@@ -3,12 +3,6 @@
 [![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/global-wildfire-risk-globe/)
 [![Preview status](https://github.com/MarinJursic/global-wildfire-risk-globe/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/global-wildfire-risk-globe/actions/workflows/pages.yml)
 
-![Illustrated EMBER social preview showing a global risk globe and uncertainty rings](public/og.png)
-
-The project-specific PNG above is the repository’s **illustrated social card**, not
-an application screenshot. It communicates the Evros focus, uncertainty rings, and
-wind-field language and is deliberately not labeled as live data.
-
 EMBER is a portfolio-grade, laptop-friendly research interface for two related but
 scientifically distinct problems:
 
@@ -30,20 +24,31 @@ interesting location.
 > contracts. They are not current observations, are not suitable for emergency
 > decisions, and do not claim to predict exact ignitions.
 
-## Real application capture
+## Continuous app walkthrough
+
+[![Continuous EMBER application walkthrough showing the Evros wildfire globe, forecast controls, theme change, and methodology panel](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
+
+[Watch or download the full-resolution MP4](docs/walkthrough/app-walkthrough.mp4)
+· [Open the walkthrough poster](docs/walkthrough/app-walkthrough-poster.jpg)
+
+This is one uninterrupted capture of the executable application. It starts with the
+24-hour Evros forecast, switches to the 7-day cumulative-risk horizon, toggles the
+forecast-envelope layer, orbits and refocuses the real Three.js globe, changes the
+entire interface to its daylight theme, and opens the methodology disclosure. The
+left panel answers “how likely is a detectable new fire in this cell?”, the center
+locates the replay and its uncertainty surface, and the right panel shows conditions,
+exposure, layers, and input provenance. No interaction or state transition in the
+walkthrough is composited or illustrated.
+
+<details>
+<summary>Open a static full-dashboard frame</summary>
 
 ![EMBER dashboard running locally in dark theme, with the ignition-risk controls at left and interactive globe at center](public/ember-dashboard.png)
 
-This PNG was captured from the locally running application, after the WebGL globe
-initialized. It is evidence of the executable dashboard—not a design mockup—and shows
-the mission-control shell, horizon selector, interactive globe, and story replay state.
-The separate social card above remains intentionally illustrative.
+This locally rendered frame is not a design mockup; it is retained as a
+full-resolution still for readers who cannot play the walkthrough.
 
-**How to read the capture:** the left panel answers “how likely is a detectable new
-fire in this cell?”, the center globe locates the replay and overlays its front, and
-the right panel answers “what could the active fire affect?”. The bottom timeline
-compares each forecast frame with its later observation contract. Orange encodes
-hazard/uncertainty; mint encodes environmental context and verification.
+</details>
 
 ## What you can do
 
@@ -91,22 +96,6 @@ hazard/uncertainty; mint encodes environmental context and verification.
 - Natural Earth’s default country theme is a **de facto boundary viewpoint**. It is
   appropriate for a small global overview, not cadastral work or a legal statement
   about disputed boundaries.
-
-## Demo narrative
-
-The interface is designed around a concise 16-second portfolio walkthrough:
-
-| Time | Story beat |
-| --- | --- |
-| 0–3 s | The globe eases from a global view and auto-focuses Alexandroupolis/Evros. |
-| 3–6 s | Wind, dryness, and simulated VIIRS-style detections establish conditions. |
-| 6–10 s | The front advances and the 90% forecast envelope expands. |
-| 10–13 s | The next observation frame arrives. |
-| 13–16 s | IoU improves and arrival-time error falls in the verification panel. |
-
-The social preview is a product-specific 1200×630 PNG used for link previews. The
-application capture above is a real frame from the executable replay; run the app to
-inspect the motion, layer toggles, timeline, and keyboard interactions directly.
 
 ## Architecture
 
@@ -190,9 +179,10 @@ can replace the simulation without redesigning the UI.
 │   │   ├── models.py          Validated Pydantic contracts
 │   │   └── simulation.py      Risk, spread, and verification models
 │   └── tests/                 API and scientific-invariant tests
+├── docs/walkthrough/          Continuous application GIF, MP4, and poster
 ├── tests/                     SSR and project-integrity tests
 ├── scripts/smoke.sh           Running frontend/API integration check
-└── public/og.png              Product social card and README visual
+└── public/og.png              Product social card for link previews
 ```
 
 ## Quick start
