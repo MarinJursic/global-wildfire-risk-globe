@@ -12,20 +12,35 @@ test("README preserves scientific honesty and reproducible setup", async () => {
   assert.match(readme, /architecture/i);
 });
 
-test("repository includes a real, reviewable dashboard capture", async () => {
-  const screenshot = await readFile(
-    new URL("../public/ember-dashboard.png", import.meta.url),
-  );
-  assert.equal(screenshot.subarray(1, 4).toString("ascii"), "PNG");
-  assert.ok(screenshot.readUInt32BE(16) >= 1200);
-  assert.ok(screenshot.readUInt32BE(20) >= 630);
+test("repository includes a real, reviewable continuous walkthrough", async () => {
+  const [video, preview, poster] = await Promise.all([
+    readFile(
+      new URL(
+        "../docs/walkthrough/app-walkthrough.mp4",
+        import.meta.url,
+      ),
+    ),
+    readFile(
+      new URL(
+        "../docs/walkthrough/app-walkthrough.gif",
+        import.meta.url,
+      ),
+    ),
+    readFile(
+      new URL(
+        "../docs/walkthrough/app-walkthrough-poster.jpg",
+        import.meta.url,
+      ),
+    ),
+  ]);
+  assert.equal(video.subarray(4, 8).toString("ascii"), "ftyp");
+  assert.equal(preview.subarray(0, 6).toString("ascii"), "GIF89a");
+  assert.deepEqual([...poster.subarray(0, 3)], [0xff, 0xd8, 0xff]);
 
   const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
-  assert.match(
-    readme,
-    /!\[EMBER dashboard running locally[^\]]*\]\(public\/ember-dashboard\.png\)/,
-  );
-  assert.match(readme, /not a design mockup/i);
+  assert.match(readme, /\]\(docs\/walkthrough\/app-walkthrough\.mp4\)/);
+  assert.match(readme, /one uninterrupted recording/i);
+  assert.match(readme, /every state transition is rendered by the running application/i);
 });
 
 test("frontend and API agree on story event and horizons", async () => {

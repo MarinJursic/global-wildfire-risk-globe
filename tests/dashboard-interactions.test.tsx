@@ -102,4 +102,27 @@ describe("wildfire dashboard controls", () => {
     expect(window.localStorage.getItem("ember-theme")).toBe("light");
     expect(screen.getByRole("button", { name: "Switch to dark theme" })).toBeTruthy();
   });
+
+  it("switches between real historic activation examples and exposes provenance", () => {
+    render(<WildfireDashboard />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Valparaíso/i }));
+    expect(screen.getByRole("heading", { name: "Valparaíso" })).toBeTruthy();
+    expect(screen.getByText(/Viña del Mar, Chile/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Sources" }));
+    expect(screen.getByRole("complementary", { name: "Data provenance" })).toBeTruthy();
+    expect(screen.getAllByText("EMSR715").length).toBeGreaterThan(0);
+    expect(screen.getByText(/does not request a live fire service/i)).toBeTruthy();
+  });
+
+  it("provides non-drag globe controls", () => {
+    render(<WildfireDashboard />);
+
+    for (const name of ["Zoom in", "Zoom out", "Focus", "Full Earth", "Reset"]) {
+      const control = screen.getByRole("button", { name });
+      expect(control).toBeTruthy();
+      fireEvent.click(control);
+    }
+  });
 });

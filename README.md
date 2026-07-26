@@ -3,26 +3,47 @@
 [![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/global-wildfire-risk-globe/)
 [![Preview status](https://github.com/MarinJursic/global-wildfire-risk-globe/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/global-wildfire-risk-globe/actions/workflows/pages.yml)
 
-EMBER is a portfolio-grade, laptop-friendly research interface for two related but
-scientifically distinct problems:
+EMBER is a full-screen planetary incident atlas for exploring historic wildfire
+activations and clearly separated research forecasts. The globe—not a panel—is the
+primary workspace. It combines three complementary tasks:
 
-1. **Ignition-risk forecasting** estimates the calibrated probability of a *new
+1. **Historic incident replay** locates documented Copernicus Emergency Management
+   Service activations in Greece, Chile, and Western Australia.
+2. **Ignition-risk forecasting** estimates the calibrated probability of a *new
    detectable fire* in a geographic cell over 6-hour, 24-hour, 48-hour, 72-hour,
    and 7-day horizons.
-2. **Active-fire spread forecasting** begins after a detection and estimates spread
+3. **Active-fire spread forecasting** begins after a detection and estimates spread
    direction, arrival-time distribution, affected area, uncertainty, and exposure.
 
-The app opens directly on a deterministic story replay inspired by the August 2023
-Alexandroupolis/Evros fire in Greece. Copernicus reports it as the largest wildfire
-recorded in the EU, at about 96,000 hectares. This gives a reviewer an immediately
-meaningful scene without requiring credentials, a large download, or a search for an
-interesting location.
+The default view opens on the 2023 Evros activation (`EMSR686`). The incident index
+also includes Valparaíso, Chile (`EMSR715`) and Wooroloo / the Perth Hills,
+Australia (`EMSR500`). Every example is a bundled deterministic artifact, so the
+atlas works without credentials, runtime tile services, or hidden downloads.
 
 > **Scientific and safety boundary:** EMBER is a research demonstration, not an
-> operational fire-alert, evacuation, or incident-command system. The replay values
-> and forecast surfaces are deterministic synthetic data shaped like production
-> contracts. They are not current observations, are not suitable for emergency
-> decisions, and do not claim to predict exact ignitions.
+> operational fire-alert, evacuation, or incident-command system. Historic
+> locations, activation identifiers, and specifically cited product summaries come
+> from public sources. The compact perimeter geometry, sampled detections, weather
+> fields, and forecasts are deterministic fixtures. They are not current
+> observations or authoritative CEMS perimeter products and must not be used for
+> emergency decisions.
+
+## Planetary atlas interaction
+
+- Drag in any direction to rotate freely across both poles; orientation is stored as
+  a normalized quaternion and has no artificial polar clamp.
+- Scroll or pinch to zoom within bounded full-Earth and incident-inspection ranges.
+- Use arrow keys to rotate, `+` / `-` to zoom, `Home` or `F` to refocus, and `R` to
+  reset the full Earth.
+- Use visible **Focus**, **Full Earth**, **Reset**, and zoom buttons when drag input
+  is unavailable.
+- Select Greece, Chile, or Australia from the incident index. Projected labels track
+  their latitude/longitude and disappear when they move behind the globe.
+- Scrub the bottom observation filmstrip. Solid amber is the cached observation
+  contract; dashed red is an illustrative p50 forecast; cyan is its illustrative
+  uncertainty envelope.
+- Open the provenance ledger at any time. It explicitly identifies the app as a
+  historic, cached, non-live replay.
 
 ## Continuous app walkthrough
 
@@ -31,37 +52,26 @@ interesting location.
 [Watch or download the full-resolution MP4](docs/walkthrough/app-walkthrough.mp4)
 · [Open the walkthrough poster](docs/walkthrough/app-walkthrough-poster.jpg)
 
-This is one uninterrupted capture of the executable application. It starts with the
-24-hour Evros forecast, switches to the 7-day cumulative-risk horizon, toggles the
-forecast-envelope layer, orbits and refocuses the real Three.js globe, changes the
-entire interface to its daylight theme, and opens the methodology disclosure. The
-left panel answers “how likely is a detectable new fire in this cell?”, the center
-locates the replay and its uncertainty surface, and the right panel shows conditions,
-exposure, layers, and input provenance. No interaction or state transition in the
-walkthrough is composited or illustrated.
-
-<details>
-<summary>Open a static full-dashboard frame</summary>
-
-![EMBER dashboard running locally in dark theme, with the ignition-risk controls at left and interactive globe at center](public/ember-dashboard.png)
-
-This locally rendered frame is not a design mockup; it is retained as a
-full-resolution still for readers who cannot play the walkthrough.
-
-</details>
+This is one uninterrupted recording of the executable atlas. It moves from the
+Evros focus to Full Earth, rotates across longitudes and a pole, refocuses on
+Valparaíso and Wooroloo, toggles temperature and historic-scar evidence, plays the
+observation story, switches to the daylight theme, and opens the methodology
+disclosure. Every state transition is rendered by the running application.
 
 ## What you can do
 
-- Orbit an animated Three.js globe auto-focused on the Evros event.
+- Orbit a full-viewport Three.js globe freely across both poles and all longitudes.
+- Move among three geographically distinct historic CEMS activations.
 - Switch between a high-contrast dark control-room theme and a readable daylight
   theme; the choice persists in local storage and defaults to the operating-system
   preference on first use.
 - Change the ignition-risk horizon and watch cumulative probability update across
   6-hour, 24-hour, 48-hour, 72-hour, and 7-day windows.
-- Toggle animated wind, temperature, soil-moisture, vegetation-dryness, VIIRS-style
-  detections, uncertainty, historical-scar, and infrastructure layers.
-- Play or scrub the 30-hour forecast-versus-observation replay; it auto-starts unless
-  the operating system requests reduced motion.
+- Toggle eight independent renderer layers: moving wind vectors; temperature,
+  soil-moisture, and vegetation-dryness scalar-field samples; VIIRS-shaped
+  detections; forecast uncertainty; time-scaled historical scars; and the active
+  incident's synthetic asset-at-risk corridor and sites.
+- Play or scrub each six-step observation sequence.
 - Compare the p50 forecast outline with the observation outline while affected area,
   settlement, road, power-line, forest, protected-area, IoU, and arrival-time metrics
   update together.
@@ -70,13 +80,15 @@ full-resolution still for readers who cannot play the walkthrough.
 
 ### Interaction and accessibility
 
-- Drag or swipe the globe to orbit it.
-- Focus the globe and use the arrow keys to orbit; press `Home` to return to Evros.
+- Drag or swipe horizontally and vertically; two-finger pinch and mouse-wheel zoom
+  share the same bounded camera contract.
+- Focus the globe and use the arrow keys to orbit; press `Home` / `F` to return to
+  the active incident or `R` to reset Earth.
 - Use the left/right arrow keys while a horizon tab is focused to change horizon.
 - Every layer control exposes an `aria-pressed` state, every icon-only control has an
   accessible name, keyboard focus is visible, and verification metrics remain
   available in the mobile layout.
-- Reduced-motion preference removes automatic replay, front pulsing, and wind motion.
+- Reduced-motion preference removes inertial and focus interpolation.
 - If WebGL is unavailable, the app reports that condition while leaving all textual
   forecasts, controls, and metrics usable.
 
@@ -87,8 +99,10 @@ full-resolution still for readers who cannot play the walkthrough.
   procedural continent shapes.
 - Long segments crossing the ±180° date line are deliberately split so they cannot
   draw a false chord through the globe.
-- The event marker uses `40.93° N, 25.86° E` in the same latitude/longitude-to-sphere
-  transform as every country boundary and asset overlay.
+- Every event marker and its incident-specific synthetic asset fixture use the same
+  latitude/longitude-to-sphere transform as the country boundaries. The infrastructure
+  geometry is deliberately labeled as an interaction fixture, not an authoritative
+  road, utility, or facility inventory.
 - Grid parallels are true spherical latitude circles. Meridians share the globe
   radius and rotation center.
 - ACES filmic tone mapping and separate ambient, key, and rim lights preserve surface
@@ -102,9 +116,9 @@ full-resolution still for readers who cannot play the walkthrough.
 ```mermaid
 flowchart LR
     subgraph Browser["Next.js / TypeScript"]
-        UI["Mission-control UI"]
+        UI["Planetary incident atlas"]
         Globe["Three.js globe"]
-        Replay["Deterministic story state"]
+        Replay["Three historic replay artifacts"]
         UI --> Globe
         Replay --> UI
     end
@@ -168,11 +182,14 @@ can replace the simulation without redesigning the UI.
 .
 ├── app/                       Next.js route, metadata, and global visual system
 ├── components/
-│   ├── GlobeScene.tsx         Three.js rendering and pointer interaction
-│   └── WildfireDashboard.tsx  Forecast controls, panels, replay, and metrics
+│   ├── GlobeScene.tsx         Three.js rendering, projection, and interaction
+│   ├── globe/
+│   │   └── ArcballController.ts  Quaternion rotation, inertia, focus, and zoom
+│   └── WildfireDashboard.tsx  Atlas rails, inspector, provenance, and filmstrip
 ├── lib/
 │   ├── contracts.ts           Frontend domain types
-│   └── story.ts               Deterministic Evros frames
+│   ├── incidents.ts           Three replay artifacts and source manifests
+│   └── story.ts               Forecast/risk transforms
 ├── backend/
 │   ├── app/
 │   │   ├── main.py            FastAPI routes and CORS
@@ -312,7 +329,7 @@ With both development servers running:
 ./scripts/smoke.sh
 ```
 
-The automated suite currently contains 17 frontend/domain/component tests and
+The automated suite currently contains 30 frontend/domain/component tests and
 14 Python tests. It checks:
 
 - server-rendered product content and metadata;

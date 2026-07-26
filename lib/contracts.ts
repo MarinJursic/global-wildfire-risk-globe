@@ -26,6 +26,44 @@ export interface StoryFrame {
   soilMoisture: number;
 }
 
+export interface SourceManifest {
+  id: string;
+  publisher: string;
+  title: string;
+  url: string;
+  license: string;
+  accessed: string;
+  note: string;
+}
+
+export interface HistoricIncident {
+  id: string;
+  name: string;
+  region: string;
+  country: string;
+  year: number;
+  latitude: number;
+  longitude: number;
+  activationCode: string;
+  status: "historic-replay";
+  summary: string;
+  sourceIds: string[];
+  frames: StoryFrame[];
+  assetFixture: {
+    label: string;
+    corridor: Array<{ latitude: number; longitude: number }>;
+    criticalSites: Array<{ latitude: number; longitude: number }>;
+    caveat: string;
+  };
+}
+
+export type GlobeAction = "focus" | "fit" | "zoom-in" | "zoom-out" | "reset";
+
+export interface GlobeCommand {
+  id: number;
+  action: GlobeAction;
+}
+
 export interface RiskInterval {
   lower: number;
   point: number;

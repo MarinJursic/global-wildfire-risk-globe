@@ -1,32 +1,52 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import type { Horizon, LayerKey } from "@/lib/contracts";
+import { useEffect, useState } from "react";
+import type {
+  GlobeAction,
+  GlobeCommand,
+  Horizon,
+  LayerKey,
+} from "@/lib/contracts";
+import {
+  HISTORIC_INCIDENTS,
+  SOURCE_MANIFESTS,
+  sourcesForIncident,
+} from "@/lib/incidents";
 import {
   exposureFor,
   HORIZON_COPY,
   LAYER_LABELS,
   riskIntervalFor,
-  STORY_FRAMES,
 } from "@/lib/story";
 
-const GlobeScene = dynamic(() => import("./GlobeScene").then((module) => module.GlobeScene), { ssr: false });
+const GlobeScene = dynamic(
+  () => import("./GlobeScene").then((module) => module.GlobeScene),
+  { ssr: false },
+);
 
 const HORIZONS: Horizon[] = ["6h", "24h", "48h", "72h", "7d"];
 const LAYERS = Object.keys(LAYER_LABELS) as LayerKey[];
 type Theme = "dark" | "light";
 
+// The default historic replay is Evros; the index also covers Chile and Australia.
 function formatArea(area: number) {
   return new Intl.NumberFormat("en", { maximumFractionDigits: 0 }).format(area);
 }
 
 export function WildfireDashboard() {
   const [theme, setTheme] = useState<Theme>("dark");
+  const [incidentId, setIncidentId] = useState(HISTORIC_INCIDENTS[0].id);
   const [horizon, setHorizon] = useState<Horizon>("24h");
   const [frameIndex, setFrameIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showInspector, setShowInspector] = useState(true);
+  const [showSources, setShowSources] = useState(false);
+  const [command, setCommand] = useState<GlobeCommand>({
+    id: 0,
+    action: "focus",
+  });
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     wind: true,
     temperature: false,
@@ -34,20 +54,31 @@ export function WildfireDashboard() {
     dryness: true,
     detections: true,
     uncertainty: true,
-    scars: true,
+    scars: false,
     infrastructure: true,
   });
-  const frame = STORY_FRAMES[frameIndex];
-  const risk = useMemo(() => riskIntervalFor(frame, horizon), [frame, horizon]);
-  const exposure = useMemo(() => exposureFor(frame), [frame]);
+
+  const incident =
+    HISTORIC_INCIDENTS.find((item) => item.id === incidentId) ??
+    HISTORIC_INCIDENTS[0];
+  const frames = incident.frames;
+  const frame = frames[Math.min(frameIndex, frames.length - 1)];
+  const risk = riskIntervalFor(frame, horizon);
+  const exposure = exposureFor(frame);
+  const incidentSources = sourcesForIncident(incident);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("ember-theme");
-    const preferredTheme = window.matchMedia("(prefers-color-scheme: light)").matches
+    const preferredTheme = window.matchMedia("(prefers-color-scheme: light)")
+      .matches
       ? "light"
       : "dark";
     const timer = window.setTimeout(() => {
-      setTheme(savedTheme === "light" || savedTheme === "dark" ? savedTheme : preferredTheme);
+      setTheme(
+        savedTheme === "light" || savedTheme === "dark"
+          ? savedTheme
+          : preferredTheme,
+      );
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -58,61 +89,60 @@ export function WildfireDashboard() {
   }, [theme]);
 
   useEffect(() => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducedMotion) return;
-    const timer = window.setTimeout(() => setPlaying(true), 0);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
     if (!playing) return;
     const timer = window.setInterval(() => {
       setFrameIndex((current) => {
-        if (current >= STORY_FRAMES.length - 1) {
+        if (current >= frames.length - 1) {
           setPlaying(false);
           return current;
         }
         return current + 1;
       });
-    }, 1400);
+    }, 1300);
     return () => window.clearInterval(timer);
-  }, [playing]);
+  }, [frames.length, playing]);
 
-  const timelineProgress = useMemo(
-    () => `${(frameIndex / (STORY_FRAMES.length - 1)) * 100}%`,
-    [frameIndex],
-  );
+  const sendGlobeCommand = (action: GlobeAction) =>
+    setCommand((current) => ({ id: current.id + 1, action }));
 
-  const toggleLayer = (layer: LayerKey) => {
-    setLayers((current) => ({ ...current, [layer]: !current[layer] }));
+  const chooseIncident = (nextId: string) => {
+    setIncidentId(nextId);
+    setFrameIndex(0);
+    setPlaying(false);
+    setShowSources(false);
+    setCommand((current) => ({ id: current.id + 1, action: "focus" }));
   };
 
+  const timelineProgress = `${(frameIndex / (frames.length - 1)) * 100}%`;
+
   return (
-    <main className="app-shell" data-theme={theme}>
-      <header className="topbar">
-        <div className="brand-block">
-          <span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>
+    <main className="app-shell atlas-shell" data-theme={theme}>
+      <header className="atlas-rail">
+        <div className="atlas-brand">
+          <span className="atlas-mark" aria-hidden="true">
+            E
+          </span>
           <div>
-            <strong>EMBER</strong>
-            <span>Global wildfire intelligence</span>
+            <strong>EMBER ATLAS</strong>
+            <span>Global wildfire intelligence · planetary incident atlas</span>
           </div>
         </div>
-        <div className="event-status">
-          <span className="live-dot" />
-          <span>Story replay</span>
-          <strong>EVROS · GREECE · 2023</strong>
+
+        <div className="replay-truth">
+          <i />
+          <div>
+            <strong>HISTORIC REPLAY</strong>
+            <span>Cached research artifacts · never live</span>
+          </div>
         </div>
-        <div className="topbar-meta">
-          <span>SIMULATION <b>v0.4.2</b></span>
+
+        <nav className="rail-actions" aria-label="Application controls">
           <button
-            className="theme-toggle"
             type="button"
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-            aria-pressed={theme === "light"}
-            title={`Use ${theme === "dark" ? "light" : "dark"} theme`}
-            onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+            onClick={() => setShowSources((current) => !current)}
+            aria-expanded={showSources}
           >
-            <span aria-hidden="true">{theme === "dark" ? "☼" : "☾"}</span>
+            Sources
           </button>
           <button
             type="button"
@@ -121,208 +151,369 @@ export function WildfireDashboard() {
             aria-controls="methodology-panel"
             onClick={() => setShowInfo((current) => !current)}
           >
-            i
+            Method
           </button>
-        </div>
+          <button
+            className="theme-toggle"
+            type="button"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            aria-pressed={theme === "light"}
+            onClick={() =>
+              setTheme((current) => (current === "dark" ? "light" : "dark"))
+            }
+          >
+            <span aria-hidden="true">{theme === "dark" ? "☼" : "☾"}</span>
+          </button>
+        </nav>
       </header>
 
       {showInfo && (
-        <section className="info-panel" id="methodology-panel" aria-label="Replay methodology">
-          <div>
-            <span>RESEARCH DEMONSTRATION</span>
-            <h2>Read the forecast as uncertainty, not certainty.</h2>
-            <p>
-              This deterministic replay uses synthetic, production-shaped values inspired by
-              the 2023 Evros event. It is not connected to live alert feeds and must not be
-              used for evacuation or incident response.
-            </p>
-            <p>
-              The risk tabs convert a 24-hour cell estimate into cumulative event
-              probabilities. The two fire-front outlines compare forecast p50 with the next
-              cached observation contract; the translucent surface is the intended 90%
-              coverage region.
-            </p>
-            <button type="button" onClick={() => setShowInfo(false)}>Close</button>
-          </div>
+        <section
+          className="atlas-dialog"
+          id="methodology-panel"
+          role="region"
+          aria-label="Replay methodology"
+        >
+          <span className="dialog-kicker">RESEARCH DEMONSTRATION</span>
+          <h2>Observed evidence and model output remain separate.</h2>
+          <p>
+            This product is not connected to live alert feeds. Historic locations,
+            activation identifiers, and cited product summaries are sourced from
+            public agencies. Compact perimeters, detections, weather fields, and
+            forecast values are deterministic research fixtures—not operational
+            fire intelligence.
+          </p>
+          <p>
+            Solid amber marks the cached observation contract. Dashed red and cyan
+            represent an illustrative forecast and uncertainty envelope. The
+            ignition panel describes probability, not certainty of ignition.
+          </p>
+          <button type="button" onClick={() => setShowInfo(false)}>
+            Close
+          </button>
         </section>
       )}
 
-      <section className="workspace">
-        <aside className="panel panel-left">
-          <div className="panel-heading">
-            <span>01 / FORECAST MODE</span>
-            <small>Calibrated estimate</small>
-          </div>
-          <h1>Ignition risk</h1>
-          <p className="lede">Probability of a <em>detectable</em> new fire, not certainty of ignition.</p>
-
-          <div className="horizon-tabs" role="tablist" aria-label="Forecast horizon">
-            {HORIZONS.map((item) => (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={horizon === item}
-                className={horizon === item ? "active" : ""}
-                key={item}
-                onClick={() => setHorizon(item)}
-                onKeyDown={(event) => {
-                  if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-                  event.preventDefault();
-                  const direction = event.key === "ArrowRight" ? 1 : -1;
-                  const next = (HORIZONS.indexOf(item) + direction + HORIZONS.length) % HORIZONS.length;
-                  setHorizon(HORIZONS[next]);
-                  document.getElementById(`horizon-${HORIZONS[next]}`)?.focus();
-                }}
-                id={`horizon-${item}`}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-
-          <div className="risk-card" aria-live="polite">
-            <span className="eyebrow">{HORIZON_COPY[horizon]} horizon · selected cell</span>
-            <div className="risk-range">
-              <strong>{Math.round(risk.lower * 100)}</strong>
-              <span>—</span>
-              <strong>{Math.round(risk.upper * 100)}%</strong>
+      {showSources && (
+        <aside className="source-drawer" aria-label="Data provenance">
+          <header>
+            <div>
+              <span>PROVENANCE LEDGER</span>
+              <h2>{incident.activationCode}</h2>
             </div>
-            <div className="risk-bar"><i style={{ width: `${risk.point * 100}%` }} /></div>
-            <p>Illustrative 95% calibration contract</p>
-          </div>
+            <button
+              type="button"
+              aria-label="Close data provenance"
+              onClick={() => setShowSources(false)}
+            >
+              ×
+            </button>
+          </header>
+          <p>
+            Every layer is cached. Opening this page does not request a live fire
+            service.
+          </p>
+          {incidentSources.map((source) => (
+            <article key={source.id}>
+              <span>{source.publisher}</span>
+              <a href={source.url} target="_blank" rel="noreferrer">
+                {source.title}
+              </a>
+              <small>{source.license}</small>
+              <p>{source.note}</p>
+            </article>
+          ))}
+          <footer>
+            {SOURCE_MANIFESTS.length} source records bundled · accessed 26 Jul
+            2026
+          </footer>
+        </aside>
+      )}
 
-          <div className="drivers">
-            <span className="section-label">Dominant drivers</span>
-            {[
-              ["Fine-fuel moisture", "8.2%", 83],
-              ["10 m wind", `${frame.windKph} km/h`, 69],
-              ["2 m temperature", `${frame.temperatureC.toFixed(1)}°C`, 57],
-              ["Soil moisture", `${Math.round(frame.soilMoisture * 100)}%`, 38],
-            ].map(([label, value, score]) => (
-              <div className="driver" key={label}>
-                <div><span>{label}</span><b>{value}</b></div>
-                <div className="driver-bar"><i style={{ width: `${score}%` }} /></div>
+      <aside className="incident-index" aria-label="Historic incident index">
+        <header>
+          <span>INCIDENT INDEX</span>
+          <strong>{HISTORIC_INCIDENTS.length} documented activations</strong>
+        </header>
+        <div className="incident-list">
+          {HISTORIC_INCIDENTS.map((item, index) => (
+            <button
+              type="button"
+              key={item.id}
+              className={item.id === incident.id ? "selected" : ""}
+              aria-pressed={item.id === incident.id}
+              onClick={() => chooseIncident(item.id)}
+            >
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <strong>{item.name}</strong>
+                <small>
+                  {item.country} · {item.year}
+                </small>
               </div>
-            ))}
-          </div>
+              <i aria-hidden="true">↗</i>
+            </button>
+          ))}
+        </div>
+        <div className="coordinate-card">
+          <span>ACTIVE COORDINATE</span>
+          <strong>
+            {Math.abs(incident.latitude).toFixed(2)}°{" "}
+            {incident.latitude >= 0 ? "N" : "S"}
+          </strong>
+          <strong>
+            {Math.abs(incident.longitude).toFixed(2)}°{" "}
+            {incident.longitude >= 0 ? "E" : "W"}
+          </strong>
+        </div>
+      </aside>
 
-          <div className="calibration">
-            <span>Calibration metadata</span>
-            <strong>ECE 0.031</strong>
-            <small>Brier 0.087 · illustrative holdout</small>
-          </div>
-        </aside>
+      <section className="atlas-stage" aria-label="Planetary incident map">
+        <div className="stage-caption">
+          <span>{incident.activationCode} · AUTO-FOCUS</span>
+          <h1>{incident.name}</h1>
+          <p>
+            {incident.region}, {incident.country}
+          </p>
+        </div>
 
-        <section className="globe-stage">
-          <div className="stage-title">
-            <span>Auto-focused significant event</span>
-            <h2>Alexandroupolis / Evros</h2>
-            <p>40.93° N · 25.86° E</p>
-          </div>
-          <div className="north-indicator"><span>N</span><i /></div>
-          <GlobeScene frame={frame} layers={layers} theme={theme} />
-          <div className="event-callout">
-            <span className="callout-line" />
-            <div>
-              <small>ACTIVE FRONT · T+{frame.hour}H</small>
-              <strong>{frame.frontKm.toFixed(1)} km perimeter</strong>
-              <span>{frame.observationCount} satellite detections</span>
-            </div>
-          </div>
-          <div className="globe-legend">
-            <span><i className="legend-observed" />Observed</span>
-            <span><i className="legend-forecast" />Forecast p50</span>
-            <span><i className="legend-uncertainty" />90% envelope</span>
-          </div>
-          <span className="drag-hint">DRAG / ARROWS TO ORBIT · HOME TO EVROS</span>
-        </section>
+        <GlobeScene
+          frame={frame}
+          incident={incident}
+          layers={layers}
+          theme={theme}
+          command={command}
+        />
 
-        <aside className="panel panel-right">
-          <div className="panel-heading">
-            <span>02 / ACTIVE FIRE</span>
-            <small>Spread forecast</small>
-          </div>
-          <h2>Front dynamics</h2>
-          <div className="wind-card">
-            <div>
-              <span>WIND VECTOR</span>
-              <strong>{frame.windDirection}</strong>
-            </div>
-            <b>{frame.windKph}<small>km/h</small></b>
-            <span className="wind-arrow" aria-hidden="true">↗</span>
-          </div>
+        <div className="globe-toolbar" aria-label="Globe controls">
+          <button
+            type="button"
+            aria-label="Zoom in"
+            onClick={() => sendGlobeCommand("zoom-in")}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom out"
+            onClick={() => sendGlobeCommand("zoom-out")}
+          >
+            −
+          </button>
+          <button type="button" onClick={() => sendGlobeCommand("focus")}>
+            Focus
+          </button>
+          <button type="button" onClick={() => sendGlobeCommand("fit")}>
+            Full Earth
+          </button>
+          <button type="button" onClick={() => sendGlobeCommand("reset")}>
+            Reset
+          </button>
+        </div>
 
-          <div className="metric-grid">
-            <div><span>Expected area</span><strong>{formatArea(frame.areaHectares)}<small> ha</small></strong><em>+12.4% / 6h</em></div>
-            <div><span>Arrival p50</span><strong>{Math.max(1.2, 9.4 - frameIndex * 1.35).toFixed(1)}<small> h</small></strong><em>± 2.1 h</em></div>
-            <div><span>Settlement exposure</span><strong>{exposure.settlements}<small> zones</small></strong><em>{formatArea(exposure.people)} people</em></div>
-            <div><span>Road exposure</span><strong>{exposure.roadsKm.toFixed(1)}<small> km</small></strong><em>E85 corridor</em></div>
-            <div><span>Power-line exposure</span><strong>{exposure.powerLinesKm.toFixed(1)}<small> km</small></strong><em>modeled corridor</em></div>
-            <div><span>Ecological exposure</span><strong>{formatArea(exposure.forestHectares)}<small> ha</small></strong><em>{formatArea(exposure.protectedAreaHectares)} ha protected</em></div>
-          </div>
+        <div className="map-key">
+          <span>
+            <i className="observed" /> Cached observation
+          </span>
+          <span>
+            <i className="forecast" /> Illustrative forecast p50
+          </span>
+          <span>
+            <i className="uncertainty" /> Illustrative 90% envelope
+          </span>
+        </div>
 
-          <div className="layer-list">
-            <span className="section-label">Map layers</span>
-            {LAYERS.map((layer) => (
-              <button
-                type="button"
-                key={layer}
-                className={layers[layer] ? "enabled" : ""}
-                aria-pressed={layers[layer]}
-                onClick={() => toggleLayer(layer)}
-              >
-                <i className={`layer-swatch ${layer}`} />
-                <span>{LAYER_LABELS[layer]}</span>
-                <b>{layers[layer] ? "ON" : "OFF"}</b>
-              </button>
-            ))}
-          </div>
-
-          <div className="provenance">
-            <span>REPLAY INPUTS</span>
-            <div><b>VIIRS</b><small>Cached observation contract</small></div>
-            <div><b>ERA5-Land</b><small>Deterministic weather field</small></div>
-            <div><b>LIGHTNING</b><small>Unavailable in this cached event</small></div>
-          </div>
-        </aside>
+        <div className="orbit-help">
+          DRAG ANY DIRECTION · PINCH / SCROLL · ARROWS · + / − · HOME · R
+        </div>
       </section>
 
-      <footer className="timeline">
+      <aside
+        className={`incident-inspector ${showInspector ? "open" : "closed"}`}
+        aria-label="Incident inspector"
+      >
+        <button
+          className="inspector-handle"
+          type="button"
+          aria-label={`${showInspector ? "Close" : "Open"} incident inspector`}
+          aria-expanded={showInspector}
+          onClick={() => setShowInspector((current) => !current)}
+        >
+          {showInspector ? "→" : "←"}
+        </button>
+        {showInspector && (
+          <div className="inspector-content">
+            <header>
+              <span>ACTIVE FRONT · T+{frame.hour}H</span>
+              <strong>{frame.label} UTC</strong>
+            </header>
+            <div className="observed-stat">
+              <span>Observed replay area</span>
+              <strong>{formatArea(frame.areaHectares)}</strong>
+              <small>hectares · normalized fixture</small>
+            </div>
+
+            <section className="risk-module">
+              <div>
+                <span>Ignition risk</span>
+                <small>Illustrative 95% calibration contract</small>
+              </div>
+              <div className="horizon-tabs" role="tablist" aria-label="Forecast horizon">
+                {HORIZONS.map((item) => (
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={horizon === item}
+                    className={horizon === item ? "active" : ""}
+                    key={item}
+                    onClick={() => setHorizon(item)}
+                    onKeyDown={(event) => {
+                      if (
+                        event.key !== "ArrowLeft" &&
+                        event.key !== "ArrowRight"
+                      )
+                        return;
+                      event.preventDefault();
+                      const direction = event.key === "ArrowRight" ? 1 : -1;
+                      const next =
+                        (HORIZONS.indexOf(item) +
+                          direction +
+                          HORIZONS.length) %
+                        HORIZONS.length;
+                      setHorizon(HORIZONS[next]);
+                      document.getElementById(`horizon-${HORIZONS[next]}`)?.focus();
+                    }}
+                    id={`horizon-${item}`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+              <div className="risk-range" aria-live="polite">
+                <strong>{Math.round(risk.lower * 100)}</strong>
+                <span>—</span>
+                <strong>{Math.round(risk.upper * 100)}%</strong>
+              </div>
+              <p>
+                {HORIZON_COPY[horizon]} horizon · probability of a detectable
+                new fire, not certainty of ignition.
+              </p>
+            </section>
+
+            <dl className="incident-metrics">
+              <div>
+                <dt>Perimeter proxy</dt>
+                <dd>{frame.frontKm.toFixed(1)} km</dd>
+              </div>
+              <div>
+                <dt>Detection sample</dt>
+                <dd>{frame.observationCount}</dd>
+              </div>
+              <div>
+                <dt>Wind fixture</dt>
+                <dd>
+                  {frame.windDirection} · {frame.windKph} km/h
+                </dd>
+              </div>
+              <div>
+                <dt>Exposed roads</dt>
+                <dd>{exposure.roadsKm.toFixed(1)} km</dd>
+              </div>
+            </dl>
+
+            <section className="layer-matrix">
+              <span>VISIBLE LAYERS</span>
+              <div>
+                {LAYERS.map((layer) => (
+                  <button
+                    type="button"
+                    key={layer}
+                    className={layers[layer] ? "enabled" : ""}
+                    aria-label={`${LAYER_LABELS[layer]} ${
+                      layers[layer] ? "on" : "off"
+                    }`}
+                    aria-pressed={layers[layer]}
+                    onClick={() =>
+                      setLayers((current) => ({
+                        ...current,
+                        [layer]: !current[layer],
+                      }))
+                    }
+                  >
+                    <i />
+                    <span>{LAYER_LABELS[layer]}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <button
+              className="source-summary"
+              type="button"
+              onClick={() => setShowSources(true)}
+            >
+              <span>
+                <strong>{incident.activationCode}</strong>
+                <small>{incidentSources.length} provenance records</small>
+              </span>
+              <b>Review →</b>
+            </button>
+          </div>
+        )}
+      </aside>
+
+      <footer className="forecast-filmstrip">
         <button
           className="play-button"
           type="button"
           aria-label={playing ? "Pause story replay" : "Play story replay"}
           onClick={() => {
-            if (frameIndex === STORY_FRAMES.length - 1) setFrameIndex(0);
+            if (frameIndex === frames.length - 1) setFrameIndex(0);
             setPlaying((current) => !current);
           }}
         >
           {playing ? "Ⅱ" : "▶"}
         </button>
-        <div className="timeline-main">
-          <div className="timeline-labels">
-            <span>FORECAST ISSUED <b>19 AUG · 06:00 UTC</b></span>
+        <div className="filmstrip-main">
+          <div className="filmstrip-heading">
+            <span>OBSERVATION SEQUENCE</span>
             <strong>{frame.label} UTC</strong>
-            <span>NEXT OBSERVATION <b>{frameIndex === STORY_FRAMES.length - 1 ? "COMPLETE" : STORY_FRAMES[frameIndex + 1].label}</b></span>
+            <span>HISTORIC / NON-OPERATIONAL</span>
           </div>
           <input
             type="range"
             min="0"
-            max={STORY_FRAMES.length - 1}
+            max={frames.length - 1}
             value={frameIndex}
             aria-label="Story replay time"
-            onChange={(event) => { setFrameIndex(Number(event.target.value)); setPlaying(false); }}
+            onChange={(event) => {
+              setFrameIndex(Number(event.target.value));
+              setPlaying(false);
+            }}
             style={{ "--progress": timelineProgress } as React.CSSProperties}
           />
-          <div className="timeline-ticks">
-            {STORY_FRAMES.map((item, index) => <span key={item.hour} className={index <= frameIndex ? "past" : ""}>{item.hour}h</span>)}
+          <div className="filmstrip-frames">
+            {frames.map((item, index) => (
+              <button
+                type="button"
+                key={`${incident.id}-${item.label}`}
+                className={index === frameIndex ? "active" : ""}
+                onClick={() => {
+                  setFrameIndex(index);
+                  setPlaying(false);
+                }}
+              >
+                <i style={{ height: `${24 + index * 7}px` }} />
+                <span>{item.label.split(" · ")[0]}</span>
+                <small>{formatArea(item.areaHectares)} ha</small>
+              </button>
+            ))}
           </div>
         </div>
-        <div className="verification">
+        <div className="forecast-verification">
           <span>FORECAST / OBSERVATION</span>
-          <div><strong>{frame.iou.toFixed(2)}</strong><small>IoU ↑</small></div>
-          <div><strong>{frame.arrivalErrorMinutes}</strong><small>min MAE ↓</small></div>
-          <div className="verification-status"><i /> OBSERVATION MATCHED</div>
+          <strong>{frame.iou.toFixed(2)} IoU</strong>
+          <small>{frame.arrivalErrorMinutes} min benchmark error</small>
         </div>
       </footer>
     </main>
