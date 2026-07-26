@@ -2,6 +2,10 @@
 
 [![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/EmberAtlas/)
 [![Preview status](https://github.com/MarinJursic/EmberAtlas/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/EmberAtlas/actions/workflows/pages.yml)
+[![Next.js](https://img.shields.io/badge/Next.js-16-111714?logo=nextdotjs)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-52%20passing-176BCA)](#verification)
 
 Ember Atlas is a full-screen planetary incident atlas for exploring historic wildfire
 activations and clearly separated research forecasts. The globe—not a panel—is the
@@ -56,9 +60,10 @@ the atlas works without credentials, runtime tile services, or hidden downloads.
 · [Open the walkthrough poster](docs/walkthrough/app-walkthrough-poster.jpg)
 
 This is one uninterrupted recording of the executable atlas. It opens on the full
-NASA-textured Earth at Evros, distinguishes the sampled CEMS evidence from the
-illustrative model sequence, refocuses on Valparaíso, switches theme, and opens the
-accessible source ledger.
+NASA-textured Earth at Evros, orbits across continents and latitude, zooms and
+returns to Full Earth, changes the scenario horizon, toggles historic-day wind,
+replays the incident timeline, refocuses on Valparaíso, opens the accessible
+source ledger, and switches theme.
 Every state transition is rendered by the running application.
 
 ## What you can do
