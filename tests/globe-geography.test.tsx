@@ -70,8 +70,8 @@ describe("globe geography", () => {
 
   it("resolves the bundled Earth texture under local and Pages base paths", () => {
     expect(earthTextureUrl("")).toBe("/textures/blue-marble-4k.jpg");
-    expect(earthTextureUrl("/EmberAtlas")).toBe(
-      "/EmberAtlas/textures/blue-marble-4k.jpg",
+    expect(earthTextureUrl("/WildfireIntelligence")).toBe(
+      "/WildfireIntelligence/textures/blue-marble-4k.jpg",
     );
   });
 });

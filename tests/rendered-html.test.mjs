@@ -29,14 +29,14 @@ test("server-renders the wildfire research product shell", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /EMBER/);
+  assert.match(html, /WILDFIRE INTELLIGENCE/);
   assert.match(html, /Global wildfire intelligence/);
   assert.match(html, /Research scenario/);
   assert.match(html, /Alexandroupolis/);
   assert.match(html, /Replay fixture comparison/i);
   assert.match(html, /CLOSED HISTORIC CASE/i);
   assert.match(html, /CEMS EMSR686 Monitoring 08/i);
-  assert.match(html, /<title>Ember Atlas — Global Wildfire Intelligence<\/title>/i);
+  assert.match(html, /<title>Wildfire Intelligence — Global Incident Analysis<\/title>/i);
   assert.doesNotMatch(html, /starter-preview|Your site is taking shape/);
 });
 

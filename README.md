@@ -1,13 +1,13 @@
-# Ember Atlas
+# Wildfire Intelligence
 
-[![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/EmberAtlas/)
-[![Preview status](https://github.com/MarinJursic/EmberAtlas/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/EmberAtlas/actions/workflows/pages.yml)
+[![Live preview](https://img.shields.io/badge/live-preview-2ea44f?logo=github)](https://marinjursic.github.io/WildfireIntelligence/)
+[![Preview status](https://github.com/MarinJursic/WildfireIntelligence/actions/workflows/pages.yml/badge.svg)](https://github.com/MarinJursic/WildfireIntelligence/actions/workflows/pages.yml)
 [![Next.js](https://img.shields.io/badge/Next.js-16-111714?logo=nextdotjs)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Tests](https://img.shields.io/badge/tests-52%20passing-176BCA)](#verification)
 
-Ember Atlas is a full-screen planetary incident atlas for exploring historic wildfire
+Wildfire Intelligence is a full-screen planetary incident atlas for exploring historic wildfire
 activations and clearly separated research forecasts. The globe—not a panel—is the
 primary workspace. It combines three complementary tasks:
 
@@ -26,7 +26,7 @@ Australia (`EMSR500`). CEMS vector samples and NASA POWER incident-day point val
 are checked into the TypeScript data layer as compact deterministic derivatives, so
 the atlas works without credentials, runtime tile services, or hidden downloads.
 
-> **Scientific and safety boundary:** Ember Atlas is a research demonstration, not an
+> **Scientific and safety boundary:** Wildfire Intelligence is a research demonstration, not an
 > operational fire-alert, evacuation, or incident-command system. Historic
 > locations, activation identifiers, mapped areas, perimeter shapes, and the Evros
 > active-flame/front evidence derive from the exact public CEMS vector packages
@@ -54,7 +54,7 @@ the atlas works without credentials, runtime tile services, or hidden downloads.
 
 ## Continuous app walkthrough
 
-[![Continuous Ember Atlas walkthrough showing the Evros wildfire globe, forecast controls, theme change, and source ledger](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
+[![Continuous Wildfire Intelligence walkthrough showing the Evros wildfire globe, forecast controls, theme change, and source ledger](docs/walkthrough/app-walkthrough.gif)](docs/walkthrough/app-walkthrough.mp4)
 
 [Watch or download the full-resolution MP4](docs/walkthrough/app-walkthrough.mp4)
 · [Open the walkthrough poster](docs/walkthrough/app-walkthrough-poster.jpg)

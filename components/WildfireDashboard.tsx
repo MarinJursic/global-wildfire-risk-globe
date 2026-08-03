@@ -173,7 +173,7 @@ export function WildfireDashboard() {
             E
           </span>
           <div>
-            <strong>EMBER ATLAS</strong>
+            <strong>WILDFIRE INTELLIGENCE</strong>
             <span>Global wildfire intelligence · planetary incident atlas</span>
           </div>
         </div>
